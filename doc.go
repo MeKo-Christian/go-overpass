@@ -8,7 +8,7 @@ Package overpass provides a client for using the Overpass API.
 
 Usage:
 
-	import "github.com/serjvanilla/go-overpass"
+	import "github.com/MeKo-Christian/go-overpass"
 
 Construct a new client, then use Query method on the client to
 receive result for your OverpassQL queries.

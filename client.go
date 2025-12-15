@@ -17,6 +17,10 @@ type Client struct {
 	apiEndpoint string
 	httpClient  HTTPClient
 	semaphore   chan struct{}
+	retryConfig RetryConfig
+	cache       *cache
+	cacheCtx    context.Context
+	cacheCancel context.CancelFunc
 }
 
 // New returns Client instance with default overpass-api.de endpoint.
@@ -30,25 +34,101 @@ func NewWithSettings(
 	maxParallel int,
 	httpClient HTTPClient,
 ) Client {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	c := Client{
 		apiEndpoint: apiEndpoint,
 		httpClient:  httpClient,
 		semaphore:   make(chan struct{}, maxParallel),
+		retryConfig: DefaultRetryConfig(),
+		cache:       newCache(DefaultCacheConfig()),
+		cacheCtx:    ctx,
+		cacheCancel: cancel,
 	}
 	for i := 0; i < maxParallel; i++ {
 		c.semaphore <- struct{}{}
 	}
 
+	c.cache.startCleanupRoutine(ctx)
 	return c
+}
+
+// NewWithRetry returns Client with custom retry configuration.
+func NewWithRetry(
+	apiEndpoint string,
+	maxParallel int,
+	httpClient HTTPClient,
+	retryConfig RetryConfig,
+) Client {
+	c := NewWithSettings(apiEndpoint, maxParallel, httpClient)
+	c.retryConfig = retryConfig
+	return c
+}
+
+// SetRetryConfig updates the retry configuration for the client.
+func (c *Client) SetRetryConfig(config RetryConfig) {
+	c.retryConfig = config
+}
+
+// SetCacheConfig updates the cache configuration for the client.
+func (c *Client) SetCacheConfig(config CacheConfig) {
+	c.cache.mu.Lock()
+	c.cache.config = config
+	c.cache.mu.Unlock()
+
+	// Restart cleanup routine if enabling cache
+	if config.Enabled {
+		c.cache.startCleanupRoutine(c.cacheCtx)
+	}
+}
+
+// ClearCache removes all cached entries.
+func (c *Client) ClearCache() {
+	c.cache.clear()
+}
+
+// CacheSize returns the number of cached entries.
+func (c *Client) CacheSize() int {
+	return c.cache.size()
+}
+
+// Close stops the cache cleanup routine and releases resources.
+func (c *Client) Close() {
+	if c.cacheCancel != nil {
+		c.cacheCancel()
+	}
 }
 
 // QueryContext sends request to OverpassAPI with provided querystring and context for cancellation/timeout.
 func (c *Client) QueryContext(ctx context.Context, query string) (Result, error) {
-	body, err := c.httpPost(ctx, query)
+	// Check cache first
+	if result, hit := c.cache.get(c.apiEndpoint, query); hit {
+		return result, nil
+	}
+
+	var body []byte
+	var err error
+
+	// Use retry logic if MaxRetries > 0
+	if c.retryConfig.MaxRetries > 0 {
+		body, err = c.retryableHTTPPost(ctx, query)
+	} else {
+		body, err = c.httpPost(ctx, query)
+	}
+
 	if err != nil {
 		return Result{}, err
 	}
-	return unmarshal(body)
+
+	result, err := unmarshal(body)
+	if err != nil {
+		return Result{}, err
+	}
+
+	// Store in cache
+	c.cache.set(c.apiEndpoint, query, result)
+
+	return result, nil
 }
 
 // Query is deprecated: use QueryContext instead.
@@ -57,4 +137,14 @@ func (c *Client) Query(query string) (Result, error) {
 	return c.QueryContext(context.Background(), query)
 }
 
+// QueryWithBuilder executes query from builder (convenience method)
+func (c *Client) QueryWithBuilder(ctx context.Context, builder *QueryBuilder) (Result, error) {
+	return c.QueryContext(ctx, builder.Build())
+}
+
 var DefaultClient = New()
+
+// QueryWithBuilder executes query from builder using DefaultClient
+func QueryWithBuilder(ctx context.Context, builder *QueryBuilder) (Result, error) {
+	return DefaultClient.QueryWithBuilder(ctx, builder)
+}
