@@ -66,7 +66,11 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("http error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("http error: %w", closeErr)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

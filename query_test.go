@@ -62,14 +62,14 @@ func TestUnmarshal(t *testing.T) {
 				tc.want.Nodes = map[int64]*Node{}
 			} else {
 				for id, n := range tc.want.Nodes {
-					n.Meta.ID = id
+					n.ID = id
 				}
 			}
 			if tc.want.Ways == nil {
 				tc.want.Ways = map[int64]*Way{}
 			} else {
 				for id, w := range tc.want.Ways {
-					w.Meta.ID = id
+					w.ID = id
 					if w.Nodes == nil {
 						w.Nodes = []*Node{}
 					}
@@ -82,7 +82,7 @@ func TestUnmarshal(t *testing.T) {
 				tc.want.Relations = map[int64]*Relation{}
 			} else {
 				for id, r := range tc.want.Relations {
-					r.Meta.ID = id
+					r.ID = id
 					if r.Members == nil {
 						r.Members = []RelationMember{}
 					}
