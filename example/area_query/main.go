@@ -26,12 +26,7 @@ func main() {
 		log.Fatalf("Error querying Overpass API: %v", err)
 	}
 
-	// Check if bounds were returned
-	if result.Bounds != nil {
-		fmt.Printf("Query bounds: %.6f,%.6f to %.6f,%.6f\n\n",
-			result.Bounds.MinLat, result.Bounds.MinLon,
-			result.Bounds.MaxLat, result.Bounds.MaxLon)
-	}
+	// Note: Result doesn't have bounds - individual elements may have bounds
 
 	// Process restaurant nodes
 	fmt.Printf("Found %d restaurant nodes\n", len(result.Nodes))
@@ -63,9 +58,10 @@ func main() {
 		}
 		fmt.Printf("- %s (Way ID: %d)\n", name, way.Meta.ID)
 
-		// Ways might have center coordinates
-		if way.Center != nil {
-			fmt.Printf("  Center: %.6f, %.6f\n", way.Center.Lat, way.Center.Lon)
+		// Ways might have geometry from 'out center' or 'out geom'
+		if way.Geometry != nil && len(way.Geometry) > 0 {
+			// Use first point as approximate center (or calculate actual center)
+			fmt.Printf("  Geometry available (%d points)\n", len(way.Geometry))
 		}
 		fmt.Println()
 	}
