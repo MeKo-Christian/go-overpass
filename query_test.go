@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"reflect"
 	"testing"
 	"testing/iotest"
@@ -24,7 +23,7 @@ func TestUnmarshal(t *testing.T) {
 			Result{
 				Count: 1,
 				Ways: map[int64]*Way{1: {
-					Bounds: Box{Min: Point{-37.9, 144.6}, Max: Point{-37.8, 144.7}},
+					Bounds: &Box{Min: Point{-37.9, 144.6}, Max: Point{-37.8, 144.7}},
 				}},
 			},
 		},
@@ -46,7 +45,7 @@ func TestUnmarshal(t *testing.T) {
 			Result{
 				Count: 1,
 				Relations: map[int64]*Relation{1: {
-					Bounds: Box{Min: Point{-37.9, 144.6}, Max: Point{-37.8, 144.7}},
+					Bounds: &Box{Min: Point{-37.9, 144.6}, Max: Point{-37.8, 144.7}},
 				}},
 			},
 		},
@@ -127,6 +126,11 @@ type mockHttpClient struct {
 	err error
 }
 
-func (m *mockHttpClient) PostForm(string, url.Values) (res *http.Response, err error) {
+func (m *mockHttpClient) Do(req *http.Request) (*http.Response, error) {
 	return m.res, m.err
+}
+
+// newTestBody creates an io.ReadCloser from a string for testing
+func newTestBody(s string) io.ReadCloser {
+	return io.NopCloser(bytes.NewReader([]byte(s)))
 }

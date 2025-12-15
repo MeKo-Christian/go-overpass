@@ -1,0 +1,20 @@
+# Trunk.io
+.trunk/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test coverage
+coverage.out
+coverage.html
+*.test
+
+# Build artifacts
+dist/
+
+# OS files
+.DS_Store

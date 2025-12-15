@@ -1,11 +1,13 @@
 package overpass
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -45,14 +47,37 @@ type overpassResponseElement struct {
 	Tags map[string]string `json:"tags"`
 }
 
-// Query send request to OverpassAPI with provided querystring.
-func (c *Client) Query(query string) (Result, error) {
-	body, err := c.httpPost(query)
+// httpPost sends HTTP POST request with context support
+func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
+	<-c.semaphore
+	defer func() { c.semaphore <- struct{}{} }()
+
+	// Create POST request with context
+	data := url.Values{"data": []string{query}}
+	req, err := http.NewRequestWithContext(ctx, "POST", c.apiEndpoint,
+		strings.NewReader(data.Encode()))
 	if err != nil {
-		return Result{}, err
+		return nil, fmt.Errorf("http error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Use Do instead of PostForm to support context
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http error: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("http error: %w", err)
 	}
 
-	return unmarshal(body)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("overpass engine error: %w", &ServerError{resp.StatusCode, body})
+	}
+
+	return body, nil
 }
 
 func unmarshal(body []byte) (Result, error) {
@@ -152,34 +177,15 @@ func unmarshal(body []byte) (Result, error) {
 	return result, nil
 }
 
-func (c *Client) httpPost(query string) ([]byte, error) {
-	<-c.semaphore
-	defer func() { c.semaphore <- struct{}{} }()
-
-	resp, err := c.httpClient.PostForm(
-		c.apiEndpoint,
-		url.Values{"data": []string{query}},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("http error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("http error: %w", err)
-	}
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("overpass engine error: %w", &ServerError{resp.StatusCode, body})
-	}
-
-	return body, nil
+// QueryContext runs query with context using default client.
+func QueryContext(ctx context.Context, query string) (Result, error) {
+	return DefaultClient.QueryContext(ctx, query)
 }
 
-// Query runs query with default client.
+// Query is deprecated: use QueryContext instead.
+// It runs query with default client using context.Background().
 func Query(query string) (Result, error) {
-	return DefaultClient.Query(query)
+	return QueryContext(context.Background(), query)
 }
 
 type ServerError struct {

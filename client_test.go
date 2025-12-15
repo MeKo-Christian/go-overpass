@@ -1,0 +1,174 @@
+package overpass
+
+import (
+	"net/http"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func TestNew(t *testing.T) {
+	client := New()
+
+	if client.apiEndpoint != apiEndpoint {
+		t.Errorf("expected endpoint %s, got %s", apiEndpoint, client.apiEndpoint)
+	}
+
+	if client.httpClient != http.DefaultClient {
+		t.Error("expected http.DefaultClient")
+	}
+
+	if cap(client.semaphore) != 1 {
+		t.Errorf("expected semaphore capacity 1, got %d", cap(client.semaphore))
+	}
+
+	if len(client.semaphore) != 1 {
+		t.Errorf("expected semaphore length 1, got %d", len(client.semaphore))
+	}
+}
+
+func TestNewWithSettings(t *testing.T) {
+	customEndpoint := "https://custom.example.com/api"
+	maxParallel := 5
+	customClient := &mockHttpClient{}
+
+	client := NewWithSettings(customEndpoint, maxParallel, customClient)
+
+	if client.apiEndpoint != customEndpoint {
+		t.Errorf("expected endpoint %s, got %s", customEndpoint, client.apiEndpoint)
+	}
+
+	if client.httpClient != customClient {
+		t.Error("expected custom HTTP client")
+	}
+
+	if cap(client.semaphore) != maxParallel {
+		t.Errorf("expected semaphore capacity %d, got %d", maxParallel, cap(client.semaphore))
+	}
+
+	if len(client.semaphore) != maxParallel {
+		t.Errorf("expected semaphore length %d, got %d", maxParallel, len(client.semaphore))
+	}
+}
+
+func TestClientRateLimiting(t *testing.T) {
+	maxParallel := 2
+	requestCount := int32(0)
+	maxConcurrent := int32(0)
+	currentConcurrent := int32(0)
+
+	// Custom client that simulates slow requests
+	slowClient := &mockSlowHttpClient{
+		delay: 100 * time.Millisecond,
+		onRequest: func() {
+			current := atomic.AddInt32(&currentConcurrent, 1)
+			atomic.AddInt32(&requestCount, 1)
+
+			// Track max concurrent
+			for {
+				max := atomic.LoadInt32(&maxConcurrent)
+				if current <= max || atomic.CompareAndSwapInt32(&maxConcurrent, max, current) {
+					break
+				}
+			}
+		},
+		onResponse: func() {
+			atomic.AddInt32(&currentConcurrent, -1)
+		},
+	}
+
+	client := NewWithSettings(apiEndpoint, maxParallel, slowClient)
+
+	// Launch multiple concurrent requests
+	numRequests := 5
+	var wg sync.WaitGroup
+	wg.Add(numRequests)
+
+	for i := 0; i < numRequests; i++ {
+		go func() {
+			defer wg.Done()
+			_, _ = client.Query(`[out:json];node(1);out;`)
+		}()
+	}
+
+	wg.Wait()
+
+	if atomic.LoadInt32(&requestCount) != int32(numRequests) {
+		t.Errorf("expected %d requests, got %d", numRequests, requestCount)
+	}
+
+	max := atomic.LoadInt32(&maxConcurrent)
+	if max > int32(maxParallel) {
+		t.Errorf("rate limiting failed: max concurrent %d exceeds limit %d", max, maxParallel)
+	}
+
+	t.Logf("Max concurrent requests: %d (limit: %d)", max, maxParallel)
+}
+
+func TestClientConcurrency(t *testing.T) {
+	// Test that multiple goroutines can safely use the client
+	// Use mockConcurrentHttpClient that creates fresh response body for each request
+	client := NewWithSettings(apiEndpoint, 3, &mockConcurrentHttpClient{})
+
+	numGoroutines := 10
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	errors := make(chan error, numGoroutines*5)
+
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 5; j++ {
+				_, err := client.Query(`[out:json];node(1);out;`)
+				if err != nil {
+					errors <- err
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+	close(errors)
+
+	// Check for errors
+	for err := range errors {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+// mockSlowHttpClient simulates slow HTTP responses for rate limiting tests
+type mockSlowHttpClient struct {
+	delay      time.Duration
+	onRequest  func()
+	onResponse func()
+}
+
+func (m *mockSlowHttpClient) Do(req *http.Request) (*http.Response, error) {
+	if m.onRequest != nil {
+		m.onRequest()
+	}
+
+	time.Sleep(m.delay)
+
+	if m.onResponse != nil {
+		m.onResponse()
+	}
+
+	return &http.Response{
+		StatusCode: 200,
+		Body:       newTestBody(`{"elements":[]}`),
+	}, nil
+}
+
+// mockConcurrentHttpClient creates fresh response bodies for each request (concurrency-safe)
+type mockConcurrentHttpClient struct{}
+
+func (m *mockConcurrentHttpClient) Do(req *http.Request) (*http.Response, error) {
+	// Create a fresh body for each request to avoid shared state issues
+	return &http.Response{
+		StatusCode: 200,
+		Body:       newTestBody(`{"elements":[]}`),
+	}, nil
+}
