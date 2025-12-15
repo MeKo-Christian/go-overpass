@@ -36,6 +36,11 @@ func NewWithSettings(
 ) Client {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Use http.DefaultClient if nil is passed
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
 	c := Client{
 		apiEndpoint: apiEndpoint,
 		httpClient:  httpClient,

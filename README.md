@@ -82,12 +82,14 @@ client := overpass.NewWithSettings(
 ### Client Creation
 
 **Default client:**
+
 ```go
 client := overpass.New()
 // Uses overpass-api.de with rate limit of 1 concurrent request
 ```
 
 **Custom client:**
+
 ```go
 client := overpass.NewWithSettings(
     "https://custom-endpoint.com/api",
@@ -99,18 +101,21 @@ client := overpass.NewWithSettings(
 ### Making Queries
 
 **With context (recommended):**
+
 ```go
 ctx := context.Background()
 result, err := client.QueryContext(ctx, "[out:json];node(1);out;")
 ```
 
 **Without context (deprecated but still works):**
+
 ```go
 result, err := client.Query("[out:json];node(1);out;")
 // Internally uses context.Background()
 ```
 
 **Package-level function:**
+
 ```go
 result, err := overpass.QueryContext(ctx, "[out:json];node(1);out;")
 // Uses default client
@@ -366,6 +371,7 @@ This fork introduces context support and breaking changes:
 ### Migration Steps
 
 1. **Update import:**
+
    ```go
    // Old
    import "github.com/serjvanilla/go-overpass"
@@ -375,6 +381,7 @@ This fork introduces context support and breaking changes:
    ```
 
 2. **Use QueryContext (recommended):**
+
    ```go
    // Old (still works but deprecated)
    result, err := client.Query("[out:json];node(1);out;")
@@ -385,6 +392,7 @@ This fork introduces context support and breaking changes:
    ```
 
 3. **Update custom HTTPClient if needed:**
+
    ```go
    // Old interface
    type HTTPClient interface {
