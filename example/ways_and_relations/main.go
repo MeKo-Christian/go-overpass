@@ -100,8 +100,24 @@ func main() {
 				if i >= 3 {
 					break
 				}
-				fmt.Printf("    %s (role: %s, ref: %d)\n",
-					member.Type, member.Role, member.Ref)
+				// Get the ID from the appropriate member type
+				var memberID int64
+				switch member.Type {
+				case overpass.ElementTypeNode:
+					if member.Node != nil {
+						memberID = member.Node.Meta.ID
+					}
+				case overpass.ElementTypeWay:
+					if member.Way != nil {
+						memberID = member.Way.Meta.ID
+					}
+				case overpass.ElementTypeRelation:
+					if member.Relation != nil {
+						memberID = member.Relation.Meta.ID
+					}
+				}
+				fmt.Printf("    %s (role: %s, id: %d)\n",
+					member.Type, member.Role, memberID)
 			}
 		}
 	}

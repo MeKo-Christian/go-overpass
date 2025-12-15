@@ -16,13 +16,13 @@ func main() {
 	}
 
 	// Create a custom Overpass client with:
-	// - Custom HTTP client
 	// - Custom endpoint (you can use alternative Overpass API servers)
 	// - Custom max parallel requests (3 concurrent requests)
+	// - Custom HTTP client
 	client := overpass.NewWithSettings(
-		httpClient,
 		"https://overpass-api.de/api/interpreter",
 		3, // maxParallel
+		httpClient,
 	)
 
 	// Query for cafes in a small area
