@@ -91,3 +91,53 @@ func TestUnsupportedMacro(t *testing.T) {
 		t.Fatalf("expected error for unsupported macro")
 	}
 }
+
+func TestMissingGeocoder(t *testing.T) {
+	_, err := Expand("node({{geocodeId:Vienna}});out;", Options{})
+	if err == nil {
+		t.Fatalf("expected error for missing geocoder")
+	}
+	if err != ErrMissingGeocoder {
+		t.Fatalf("expected ErrMissingGeocoder, got %v", err)
+	}
+}
+
+type fakeGeocoder struct {
+	result GeocodeResult
+	err    error
+}
+
+func (f fakeGeocoder) Geocode(query string) (GeocodeResult, error) {
+	return f.result, f.err
+}
+
+func TestGeocodeMacros(t *testing.T) {
+	geocoder := fakeGeocoder{
+		result: GeocodeResult{
+			OSMType: "relation",
+			OSMID:   1645,
+			BBox:    &BBox{South: 1, West: 2, North: 3, East: 4},
+			Center:  &Center{Lat: 5, Lon: 6},
+		},
+	}
+
+	res, err := Expand("{{geocodeId:Vienna}};{{geocodeArea:Vienna}};{{geocodeBbox:Vienna}};{{geocodeCoords:Vienna}}", Options{
+		Geocoder: geocoder,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(res.Query, "relation(1645)") {
+		t.Fatalf("geocodeId not expanded: %s", res.Query)
+	}
+	if !strings.Contains(res.Query, "area(3600001645)") {
+		t.Fatalf("geocodeArea not expanded: %s", res.Query)
+	}
+	if !strings.Contains(res.Query, "1,2,3,4") {
+		t.Fatalf("geocodeBbox not expanded: %s", res.Query)
+	}
+	if !strings.Contains(res.Query, "5,6") {
+		t.Fatalf("geocodeCoords not expanded: %s", res.Query)
+	}
+}

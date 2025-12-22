@@ -146,6 +146,12 @@ If the query includes `{{data:overpass,server=...}}`, the parsed `Result` expose
 `EndpointOverride` so you can switch endpoints if desired. Use
 `turbo.ApplyEndpointOverride` to prefer the override when present.
 
+For convenience, `turbo.NewClientWithOverride` can build a client using the
+override (falling back to your default endpoint when absent).
+
+Geocoding macros like `{{geocodeArea:...}}` are supported when you provide a
+`turbo.Geocoder` implementation in `turbo.Options`.
+
 ### Working with Results
 
 ```go

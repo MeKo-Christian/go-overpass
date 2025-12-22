@@ -35,6 +35,7 @@ type Options struct {
 	Center    *Center
 	Now       time.Time
 	Shortcuts map[string]string
+	Geocoder  Geocoder
 }
 
 // Result holds the expanded query and any extracted metadata.
@@ -47,9 +48,11 @@ type Result struct {
 }
 
 var (
-	ErrMissingBBox   = errors.New("turbo: bbox not provided")
-	ErrMissingCenter = errors.New("turbo: center not provided")
-	ErrBadMacro      = errors.New("turbo: unsupported or malformed macro")
+	ErrMissingBBox     = errors.New("turbo: bbox not provided")
+	ErrMissingCenter   = errors.New("turbo: center not provided")
+	ErrMissingGeocoder = errors.New("turbo: geocoder not provided")
+	ErrGeocodeData     = errors.New("turbo: geocoder result missing data")
+	ErrBadMacro        = errors.New("turbo: unsupported or malformed macro")
 )
 
 // Expand replaces a subset of Overpass Turbo macros with Overpass QL compatible text.
@@ -109,7 +112,7 @@ func Expand(query string, opts Options) (Result, error) {
 		}
 
 		if strings.HasPrefix(content, "geocode") {
-			return "", ErrBadMacro
+			return expandGeocode(content, opts)
 		}
 
 		if content == "bbox" {
