@@ -21,3 +21,6 @@ dist/
 
 # Agents
 .claude/
+
+# Cache
+.gocache/

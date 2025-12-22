@@ -121,6 +121,31 @@ result, err := overpass.QueryContext(ctx, "[out:json];node(1);out;")
 // Uses default client
 ```
 
+### Overpass Turbo Macro Expansion (Subset)
+
+The `turbo` subpackage provides a small, pure-Go preprocessor for common Overpass Turbo
+macros so you can paste Turbo queries and run them against the Overpass API.
+
+```go
+import "github.com/MeKo-Christian/go-overpass/turbo"
+
+res, err := turbo.Expand(`node({{bbox}});out;`, turbo.Options{
+    BBox: &turbo.BBox{South: 52.5, West: 13.4, North: 52.51, East: 13.41},
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+result, err := overpass.QueryContext(ctx, res.Query)
+```
+
+Supported macros in this initial subset: `{{bbox}}`, `{{center}}`, `{{date}}`,
+`{{date:<n unit>}}`, and custom shortcuts `{{key=value}}`.
+
+If the query includes `{{data:overpass,server=...}}`, the parsed `Result` exposes
+`EndpointOverride` so you can switch endpoints if desired. Use
+`turbo.ApplyEndpointOverride` to prefer the override when present.
+
 ### Working with Results
 
 ```go
