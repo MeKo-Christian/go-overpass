@@ -9,6 +9,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	client := New()
 
 	if client.apiEndpoint != apiEndpoint {
@@ -29,6 +31,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewWithSettings(t *testing.T) {
+	t.Parallel()
+
 	customEndpoint := "https://custom.example.com/api"
 	maxParallel := 5
 	customClient := &mockHTTPClient{}
@@ -53,6 +57,8 @@ func TestNewWithSettings(t *testing.T) {
 }
 
 func TestClientRateLimiting(t *testing.T) {
+	t.Parallel()
+
 	maxParallel := 2
 	requestCount := int32(0)
 	maxConcurrent := int32(0)
@@ -108,6 +114,8 @@ func TestClientRateLimiting(t *testing.T) {
 }
 
 func TestClientConcurrency(t *testing.T) {
+	t.Parallel()
+
 	// Test that multiple goroutines can safely use the client
 	// Use mockConcurrentHttpClient that creates fresh response body for each request
 	client := NewWithSettings(apiEndpoint, 3, &mockConcurrentHttpClient{})

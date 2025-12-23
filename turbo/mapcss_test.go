@@ -5,6 +5,8 @@ import (
 )
 
 func TestParseMapCSSBasicSelector(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		input    string
@@ -50,7 +52,10 @@ func TestParseMapCSSBasicSelector(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -70,6 +75,8 @@ func TestParseMapCSSBasicSelector(t *testing.T) {
 }
 
 func TestParseMapCSSConditions(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string
@@ -136,7 +143,10 @@ func TestParseMapCSSConditions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -168,6 +178,8 @@ func TestParseMapCSSConditions(t *testing.T) {
 }
 
 func TestParseMapCSSColors(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name      string
 		input     string
@@ -243,7 +255,10 @@ func TestParseMapCSSColors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -283,6 +298,8 @@ func TestParseMapCSSColors(t *testing.T) {
 }
 
 func TestParseMapCSSDeclarations(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		input    string
@@ -327,7 +344,10 @@ func TestParseMapCSSDeclarations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -350,6 +370,8 @@ func TestParseMapCSSDeclarations(t *testing.T) {
 }
 
 func TestParseMapCSSMultipleSelectors(t *testing.T) {
+	t.Parallel()
+
 	input := "way[highway=primary], way[highway=secondary] { color: red; }"
 
 	ss, err := ParseMapCSS(input)
@@ -367,6 +389,8 @@ func TestParseMapCSSMultipleSelectors(t *testing.T) {
 }
 
 func TestParseMapCSSMultipleRules(t *testing.T) {
+	t.Parallel()
+
 	input := `
 		way[highway=primary] { color: red; }
 		way[highway=secondary] { color: blue; }
@@ -384,6 +408,8 @@ func TestParseMapCSSMultipleRules(t *testing.T) {
 }
 
 func TestParseMapCSSComments(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -413,7 +439,10 @@ func TestParseMapCSSComments(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -427,6 +456,8 @@ func TestParseMapCSSComments(t *testing.T) {
 }
 
 func TestParseMapCSSSetDirective(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		input    string
@@ -454,7 +485,10 @@ func TestParseMapCSSSetDirective(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -477,6 +511,8 @@ func TestParseMapCSSSetDirective(t *testing.T) {
 }
 
 func TestParseMapCSSPseudoClasses(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		input  string
@@ -505,7 +541,10 @@ func TestParseMapCSSPseudoClasses(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -530,6 +569,8 @@ func TestParseMapCSSPseudoClasses(t *testing.T) {
 }
 
 func TestParseMapCSSClassSelectors(t *testing.T) {
+	t.Parallel()
+
 	input := "way.minor_road { color: gray; }"
 
 	ss, err := ParseMapCSS(input)
@@ -548,6 +589,8 @@ func TestParseMapCSSClassSelectors(t *testing.T) {
 }
 
 func TestParseMapCSSLayer(t *testing.T) {
+	t.Parallel()
+
 	input := "way::casing { width: 10; }"
 
 	ss, err := ParseMapCSS(input)
@@ -566,6 +609,8 @@ func TestParseMapCSSLayer(t *testing.T) {
 }
 
 func TestParseMapCSSZoomRange(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string
@@ -593,17 +638,20 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			ss, err := ParseMapCSS(tt.input)
+			t.Parallel()
+
+			styleSheet, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+			if len(styleSheet.Rules) == 0 || len(styleSheet.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
 
-			sel := ss.Rules[0].Selectors[0]
+			sel := styleSheet.Rules[0].Selectors[0]
 			if sel.ZoomMin != tt.wantMin {
 				t.Errorf("got ZoomMin %d, want %d", sel.ZoomMin, tt.wantMin)
 			}
@@ -616,18 +664,20 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 }
 
 func TestParseMapCSSDescendantSelector(t *testing.T) {
+	t.Parallel()
+
 	input := "relation[type=route] way[highway] { color: red; }"
 
-	ss, err := ParseMapCSS(input)
+	styleSheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+	if len(styleSheet.Rules) == 0 || len(styleSheet.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
 
-	sel := ss.Rules[0].Selectors[0]
+	sel := styleSheet.Rules[0].Selectors[0]
 	if sel.Type != "way" {
 		t.Errorf("got type %q, want %q", sel.Type, "way")
 	}
@@ -642,6 +692,8 @@ func TestParseMapCSSDescendantSelector(t *testing.T) {
 }
 
 func TestParseMapCSSQuotedStrings(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string
@@ -663,7 +715,10 @@ func TestParseMapCSSQuotedStrings(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ss, err := ParseMapCSS(tt.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
@@ -691,6 +746,8 @@ func TestParseMapCSSQuotedStrings(t *testing.T) {
 }
 
 func TestParseMapCSSComplexStylesheet(t *testing.T) {
+	t.Parallel()
+
 	input := `
 		/* Overpass Turbo MapCSS example */
 		node[amenity=cafe] {
@@ -738,6 +795,8 @@ func TestParseMapCSSComplexStylesheet(t *testing.T) {
 }
 
 func TestExpandWithParsedStyle(t *testing.T) {
+	t.Parallel()
+
 	query := `[out:json];{{style: node { color: red; } }}node[amenity=cafe]({{bbox}});out;`
 	opts := Options{
 		BBox: &BBox{South: 48.0, West: 16.0, North: 49.0, East: 17.0},
@@ -766,6 +825,8 @@ func TestExpandWithParsedStyle(t *testing.T) {
 }
 
 func TestColorHex(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		color   Color
 		wantHex string
@@ -779,7 +840,10 @@ func TestColorHex(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.wantHex, func(t *testing.T) {
+			t.Parallel()
+
 			got := tt.color.Hex()
 			if got != tt.wantHex {
 				t.Errorf("got %q, want %q", got, tt.wantHex)
@@ -789,6 +853,8 @@ func TestColorHex(t *testing.T) {
 }
 
 func TestParseError(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -804,7 +870,10 @@ func TestParseError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			_, err := ParseMapCSS(tt.input)
 			if err == nil {
 				t.Error("expected error, got nil")

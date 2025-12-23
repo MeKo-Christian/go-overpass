@@ -8,6 +8,8 @@ import (
 )
 
 func TestExpandBBoxAndCenter(t *testing.T) {
+	t.Parallel()
+
 	query := "node({{bbox}});out;{{center}}"
 
 	res, err := Expand(query, Options{
@@ -28,6 +30,8 @@ func TestExpandBBoxAndCenter(t *testing.T) {
 }
 
 func TestExpandDate(t *testing.T) {
+	t.Parallel()
+
 	now := time.Date(2024, 2, 10, 12, 30, 0, 0, time.UTC)
 
 	res, err := Expand(`node["check_date" > "{{date:1 day}}"];out;`, Options{
@@ -43,6 +47,8 @@ func TestExpandDate(t *testing.T) {
 }
 
 func TestCustomShortcuts(t *testing.T) {
+	t.Parallel()
+
 	query := "{{foo=bar}}node({{foo}});out;"
 
 	res, err := Expand(query, Options{})
@@ -60,6 +66,8 @@ func TestCustomShortcuts(t *testing.T) {
 }
 
 func TestStyleAndDataExtraction(t *testing.T) {
+	t.Parallel()
+
 	query := `{{style:line[highway=path]{color:red;}}}
 {{data:overpass,server=https://overpass-api.de/api/}}
 node(1);out;`
@@ -95,6 +103,8 @@ node(1);out;`
 }
 
 func TestMultipleStyles(t *testing.T) {
+	t.Parallel()
+
 	query := `{{style:a}}node(1);out;{{style:b}}`
 
 	res, err := Expand(query, Options{})
@@ -112,6 +122,8 @@ func TestMultipleStyles(t *testing.T) {
 }
 
 func TestApplyEndpointOverride(t *testing.T) {
+	t.Parallel()
+
 	res := Result{EndpointOverride: "https://example.com/api/interpreter"}
 
 	endpoint := ApplyEndpointOverride("https://default/api/interpreter", res)
@@ -126,6 +138,8 @@ func TestApplyEndpointOverride(t *testing.T) {
 }
 
 func TestSQLDataSource(t *testing.T) {
+	t.Parallel()
+
 	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc}}
 node(1);out;`
 
@@ -156,6 +170,8 @@ node(1);out;`
 }
 
 func TestSQLDataConfigFromResult(t *testing.T) {
+	t.Parallel()
+
 	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc,foo=bar}}
 node(1);out;`
 
@@ -183,6 +199,8 @@ node(1);out;`
 }
 
 func TestUnsupportedMacro(t *testing.T) {
+	t.Parallel()
+
 	_, err := Expand("node({{geocodeArea:Vienna}});out;", Options{})
 	if err == nil {
 		t.Fatalf("expected error for unsupported macro")
@@ -190,6 +208,8 @@ func TestUnsupportedMacro(t *testing.T) {
 }
 
 func TestMissingGeocoder(t *testing.T) {
+	t.Parallel()
+
 	_, err := Expand("node({{geocodeId:Vienna}});out;", Options{})
 	if err == nil {
 		t.Fatalf("expected error for missing geocoder")
@@ -210,6 +230,8 @@ func (f fakeGeocoder) Geocode(query string) (GeocodeResult, error) {
 }
 
 func TestGeocodeMacros(t *testing.T) {
+	t.Parallel()
+
 	geocoder := fakeGeocoder{
 		result: GeocodeResult{
 			OSMType: "relation",
@@ -244,6 +266,8 @@ func TestGeocodeMacros(t *testing.T) {
 }
 
 func TestXMLMacroExpansion(t *testing.T) {
+	t.Parallel()
+
 	query := `<osm-script><query {{bbox}}/><center {{center}}/></osm-script>`
 
 	res, err := Expand(query, Options{
@@ -264,6 +288,8 @@ func TestXMLMacroExpansion(t *testing.T) {
 }
 
 func TestXMLGeocodeExpansion(t *testing.T) {
+	t.Parallel()
+
 	geocoder := fakeGeocoder{
 		result: GeocodeResult{
 			OSMType: "relation",

@@ -9,6 +9,8 @@ import (
 )
 
 func TestQueryContext_Success(t *testing.T) {
+	t.Parallel()
+
 	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
@@ -33,6 +35,8 @@ func TestQueryContext_Success(t *testing.T) {
 }
 
 func TestQueryContext_Cancellation(t *testing.T) {
+	t.Parallel()
+
 	// Create a client with a slow mock that checks for context cancellation
 	slowClient := &mockCancellableHttpClient{
 		delay: 200 * time.Millisecond,
@@ -57,6 +61,8 @@ func TestQueryContext_Cancellation(t *testing.T) {
 }
 
 func TestQueryContext_Timeout(t *testing.T) {
+	t.Parallel()
+
 	// Create a client with a slow mock
 	slowClient := &mockCancellableHttpClient{
 		delay: 200 * time.Millisecond,
@@ -79,6 +85,8 @@ func TestQueryContext_Timeout(t *testing.T) {
 }
 
 func TestQueryContext_Background(t *testing.T) {
+	t.Parallel()
+
 	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
@@ -98,6 +106,8 @@ func TestQueryContext_Background(t *testing.T) {
 }
 
 func TestQuery_UsesBackgroundContext(t *testing.T) {
+	t.Parallel()
+
 	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
@@ -117,6 +127,8 @@ func TestQuery_UsesBackgroundContext(t *testing.T) {
 }
 
 func TestPackageLevelQueryContext(t *testing.T) {
+	// Note: This test modifies DefaultClient so it cannot run in parallel
+
 	// Test package-level QueryContext function
 	// Note: This uses DefaultClient which is initialized with http.DefaultClient
 	// In a real test environment, this would make actual HTTP requests
@@ -151,6 +163,8 @@ func TestPackageLevelQueryContext(t *testing.T) {
 }
 
 func TestPackageLevelQuery(t *testing.T) {
+	// Note: This test modifies DefaultClient so it cannot run in parallel
+
 	// Save original DefaultClient
 	originalClient := DefaultClient
 

@@ -150,18 +150,18 @@ func Expand(query string, opts Options) (Result, error) {
 		}
 
 		if strings.HasPrefix(content, "data:") {
-			ds, err := parseDataSource(strings.TrimPrefix(content, "data:"))
+			dataSrc, err := parseDataSource(strings.TrimPrefix(content, "data:"))
 			if err != nil {
 				return "", err
 			}
 
-			res.Data = ds
-			if server, ok := ds.Options["server"]; ok {
+			res.Data = dataSrc
+			if server, ok := dataSrc.Options["server"]; ok {
 				res.DataServer = server
 			}
 
-			if strings.EqualFold(ds.Mode, "overpass") {
-				if server, ok := ds.Options["server"]; ok {
+			if strings.EqualFold(dataSrc.Mode, "overpass") {
+				if server, ok := dataSrc.Options["server"]; ok {
 					res.EndpointOverride = normalizeEndpoint(server)
 				}
 			}

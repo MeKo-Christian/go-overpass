@@ -52,7 +52,11 @@ func TestUnmarshal(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
+		tc := tc // capture range variable
+
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
+			t.Parallel()
+
 			got, err := unmarshal([]byte(tc.input))
 			if err != nil {
 				t.Fatal(err)
@@ -100,6 +104,8 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestQueryErrors(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		res  *http.Response
 		err  error
@@ -131,7 +137,11 @@ func TestQueryErrors(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
+		tc := tc // capture range variable
+
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
+			t.Parallel()
+
 			cli := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{tc.res, tc.err})
 
 			_, err := cli.Query("")

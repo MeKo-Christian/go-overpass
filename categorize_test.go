@@ -5,6 +5,8 @@ import (
 )
 
 func TestGetCategory(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -93,7 +95,10 @@ func TestGetCategory(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.GetCategory()
@@ -105,6 +110,8 @@ func TestGetCategory(t *testing.T) {
 }
 
 func TestGetSubcategory(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -173,7 +180,10 @@ func TestGetSubcategory(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.GetSubcategory()
@@ -185,6 +195,8 @@ func TestGetSubcategory(t *testing.T) {
 }
 
 func TestCategoryHelpers(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name   string
 		tags   map[string]string
@@ -254,7 +266,10 @@ func TestCategoryHelpers(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := tc.method(&meta)
@@ -266,6 +281,8 @@ func TestCategoryHelpers(t *testing.T) {
 }
 
 func TestGetName(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -289,7 +306,10 @@ func TestGetName(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.GetName()
@@ -301,6 +321,8 @@ func TestGetName(t *testing.T) {
 }
 
 func TestHasTag(t *testing.T) {
+	t.Parallel()
+
 	meta := Meta{
 		Tags: map[string]string{
 			"amenity": "restaurant",
@@ -322,6 +344,8 @@ func TestHasTag(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
+	t.Parallel()
+
 	meta := Meta{
 		Tags: map[string]string{
 			"amenity": "restaurant",
@@ -342,6 +366,8 @@ func TestGetTag(t *testing.T) {
 }
 
 func TestMatchesFilter(t *testing.T) {
+	t.Parallel()
+
 	meta := Meta{
 		Tags: map[string]string{
 			"amenity": "restaurant",
@@ -367,6 +393,8 @@ func TestMatchesFilter(t *testing.T) {
 }
 
 func TestIsRoad(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -400,7 +428,10 @@ func TestIsRoad(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.IsRoad()
@@ -412,6 +443,8 @@ func TestIsRoad(t *testing.T) {
 }
 
 func TestIsRailway(t *testing.T) {
+	t.Parallel()
+
 	meta1 := Meta{Tags: map[string]string{"railway": "station"}}
 	if !meta1.IsRailway() {
 		t.Error("expected railway")
@@ -429,6 +462,8 @@ func TestIsRailway(t *testing.T) {
 }
 
 func TestIsFoodRelated(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -447,7 +482,10 @@ func TestIsFoodRelated(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.IsFoodRelated()
@@ -459,6 +497,8 @@ func TestIsFoodRelated(t *testing.T) {
 }
 
 func TestIsEducation(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -475,7 +515,10 @@ func TestIsEducation(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.IsEducation()
@@ -487,6 +530,8 @@ func TestIsEducation(t *testing.T) {
 }
 
 func TestIsHealthcare(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		tags     map[string]string
@@ -503,7 +548,10 @@ func TestIsHealthcare(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			meta := Meta{Tags: tc.tags}
 
 			got := meta.IsHealthcare()
@@ -515,6 +563,8 @@ func TestIsHealthcare(t *testing.T) {
 }
 
 func TestCategoryPriority(t *testing.T) {
+	t.Parallel()
+
 	// Element with multiple category tags - highway should win
 	meta := Meta{
 		Tags: map[string]string{
@@ -536,6 +586,8 @@ func TestCategoryPriority(t *testing.T) {
 }
 
 func TestEmptyTags(t *testing.T) {
+	t.Parallel()
+
 	meta := Meta{Tags: map[string]string{}}
 
 	if meta.GetCategory() != CategoryUnknown {
@@ -556,6 +608,8 @@ func TestEmptyTags(t *testing.T) {
 }
 
 func TestNilTags(t *testing.T) {
+	t.Parallel()
+
 	meta := Meta{Tags: nil}
 
 	// Should not panic
@@ -579,6 +633,8 @@ func TestNilTags(t *testing.T) {
 }
 
 func TestMultipleTransportationTypes(t *testing.T) {
+	t.Parallel()
+
 	// Should prioritize highway over railway
 	meta := Meta{
 		Tags: map[string]string{
@@ -599,6 +655,8 @@ func TestMultipleTransportationTypes(t *testing.T) {
 }
 
 func TestRealWorldExample(t *testing.T) {
+	t.Parallel()
+
 	// Restaurant with full details
 	restaurant := Meta{
 		Tags: map[string]string{

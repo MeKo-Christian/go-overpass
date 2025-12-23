@@ -5,6 +5,8 @@ import (
 )
 
 func TestResult_GetNode(t *testing.T) {
+	t.Parallel()
+
 	result := Result{
 		Nodes: make(map[int64]*Node),
 	}
@@ -37,6 +39,8 @@ func TestResult_GetNode(t *testing.T) {
 }
 
 func TestResult_GetNode_Existing(t *testing.T) {
+	t.Parallel()
+
 	// Pre-populate a node
 	existingNode := &Node{
 		Meta: Meta{ID: 456},
@@ -62,6 +66,8 @@ func TestResult_GetNode_Existing(t *testing.T) {
 }
 
 func TestResult_GetWay(t *testing.T) {
+	t.Parallel()
+
 	result := Result{
 		Ways: make(map[int64]*Way),
 	}
@@ -94,6 +100,8 @@ func TestResult_GetWay(t *testing.T) {
 }
 
 func TestResult_GetWay_Existing(t *testing.T) {
+	t.Parallel()
+
 	// Pre-populate a way
 	existingWay := &Way{
 		Meta:  Meta{ID: 999},
@@ -118,6 +126,8 @@ func TestResult_GetWay_Existing(t *testing.T) {
 }
 
 func TestResult_GetRelation(t *testing.T) {
+	t.Parallel()
+
 	result := Result{
 		Relations: make(map[int64]*Relation),
 	}
@@ -150,6 +160,8 @@ func TestResult_GetRelation(t *testing.T) {
 }
 
 func TestResult_GetRelation_Existing(t *testing.T) {
+	t.Parallel()
+
 	// Pre-populate a relation
 	existingRelation := &Relation{
 		Meta:    Meta{ID: 222},
@@ -174,6 +186,8 @@ func TestResult_GetRelation_Existing(t *testing.T) {
 }
 
 func TestResult_GetMultiple(t *testing.T) {
+	t.Parallel()
+
 	// Test getting multiple different types in one result
 	result := Result{
 		Nodes:     make(map[int64]*Node),

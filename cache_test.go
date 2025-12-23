@@ -10,6 +10,8 @@ import (
 )
 
 func TestDefaultCacheConfig(t *testing.T) {
+	t.Parallel()
+
 	config := DefaultCacheConfig()
 
 	if config.Enabled {
@@ -26,6 +28,8 @@ func TestDefaultCacheConfig(t *testing.T) {
 }
 
 func TestCacheDisabledByDefault(t *testing.T) {
+	t.Parallel()
+
 	c := newCache(DefaultCacheConfig())
 
 	// Set should be no-op when disabled
@@ -39,6 +43,8 @@ func TestCacheDisabledByDefault(t *testing.T) {
 }
 
 func TestCacheSetAndGet(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        time.Minute,
@@ -68,6 +74,8 @@ func TestCacheSetAndGet(t *testing.T) {
 }
 
 func TestCacheExpiration(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        100 * time.Millisecond,
@@ -95,6 +103,8 @@ func TestCacheExpiration(t *testing.T) {
 }
 
 func TestCacheKeyGeneration(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{Enabled: true, TTL: time.Minute, MaxEntries: 100}
 	c := newCache(config)
 
@@ -126,6 +136,8 @@ func TestCacheKeyGeneration(t *testing.T) {
 }
 
 func TestCacheMaxEntries(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        time.Hour,
@@ -161,6 +173,8 @@ func TestCacheMaxEntries(t *testing.T) {
 }
 
 func TestCacheClear(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{Enabled: true, TTL: time.Hour, MaxEntries: 100}
 	c := newCache(config)
 
@@ -184,6 +198,8 @@ func TestCacheClear(t *testing.T) {
 }
 
 func TestCacheCleanup(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        50 * time.Millisecond,
@@ -210,6 +226,8 @@ func TestCacheCleanup(t *testing.T) {
 }
 
 func TestCacheCleanupRoutine(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        50 * time.Millisecond,
@@ -234,6 +252,8 @@ func TestCacheCleanupRoutine(t *testing.T) {
 }
 
 func TestClientCacheIntegration(t *testing.T) {
+	t.Parallel()
+
 	successBody := []byte(`{"osm3s":{},"elements":[{"type":"node","id":1}]}`)
 	mock := &mockHTTPClient{
 		res: &http.Response{
@@ -283,6 +303,8 @@ func TestClientCacheIntegration(t *testing.T) {
 }
 
 func TestClientClearCache(t *testing.T) {
+	t.Parallel()
+
 	client := New()
 	client.SetCacheConfig(CacheConfig{Enabled: true, TTL: time.Hour, MaxEntries: 100})
 
@@ -302,6 +324,8 @@ func TestClientClearCache(t *testing.T) {
 }
 
 func TestCacheDisabledSkipsStorage(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    false,
 		TTL:        time.Hour,
@@ -319,6 +343,8 @@ func TestCacheDisabledSkipsStorage(t *testing.T) {
 }
 
 func TestCacheWithZeroMaxEntries(t *testing.T) {
+	t.Parallel()
+
 	config := CacheConfig{
 		Enabled:    true,
 		TTL:        time.Minute,

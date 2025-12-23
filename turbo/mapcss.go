@@ -1041,7 +1041,8 @@ func isTypeStart(ch byte) bool {
 
 func parseHexColorValue(hex string) (*Color, error) {
 	hex = strings.TrimPrefix(hex, "#")
-	var r, g, b, a float64 = 0, 0, 0, 1
+	var r, g, b, a float64
+	a = 1 // default alpha
 
 	switch len(hex) {
 	case 3: // #RGB

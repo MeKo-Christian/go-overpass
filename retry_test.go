@@ -13,6 +13,8 @@ import (
 )
 
 func TestDefaultRetryConfig(t *testing.T) {
+	t.Parallel()
+
 	config := DefaultRetryConfig()
 
 	if config.MaxRetries != 3 {
@@ -37,6 +39,8 @@ func TestDefaultRetryConfig(t *testing.T) {
 }
 
 func TestIsRetryableStatus(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		status    int
 		retryable bool
@@ -54,7 +58,10 @@ func TestIsRetryableStatus(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(fmt.Sprintf("status_%d", tc.status), func(t *testing.T) {
+			t.Parallel()
+
 			if got := isRetryableStatus(tc.status); got != tc.retryable {
 				t.Errorf("status %d: expected %v, got %v", tc.status, tc.retryable, got)
 			}
@@ -63,6 +70,8 @@ func TestIsRetryableStatus(t *testing.T) {
 }
 
 func TestCalculateBackoff(t *testing.T) {
+	t.Parallel()
+
 	config := RetryConfig{
 		InitialBackoff:    time.Second,
 		MaxBackoff:        10 * time.Second,
@@ -83,7 +92,10 @@ func TestCalculateBackoff(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(fmt.Sprintf("attempt_%d", tc.attempt), func(t *testing.T) {
+			t.Parallel()
+
 			got := calculateBackoff(tc.attempt, config)
 			if got != tc.expected {
 				t.Errorf("attempt %d: expected %v, got %v", tc.attempt, tc.expected, got)
@@ -93,6 +105,8 @@ func TestCalculateBackoff(t *testing.T) {
 }
 
 func TestCalculateBackoffWithJitter(t *testing.T) {
+	t.Parallel()
+
 	config := DefaultRetryConfig()
 
 	backoff := calculateBackoff(0, config)
@@ -135,6 +149,8 @@ func (m *failingMockClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func TestRetrySuccess(t *testing.T) {
+	t.Parallel()
+
 	mock := &failingMockClient{failCount: 2, statusCode: 503}
 
 	config := RetryConfig{
@@ -171,6 +187,8 @@ func TestRetrySuccess(t *testing.T) {
 }
 
 func TestRetryExhaustion(t *testing.T) {
+	t.Parallel()
+
 	mock := &failingMockClient{failCount: 10, statusCode: 503}
 
 	config := RetryConfig{
@@ -199,6 +217,8 @@ func TestRetryExhaustion(t *testing.T) {
 }
 
 func TestNoRetryOnNonRetryableStatus(t *testing.T) {
+	t.Parallel()
+
 	mock := &failingMockClient{failCount: 10, statusCode: 400}
 
 	client := NewWithSettings(apiEndpoint, 1, mock)
@@ -215,6 +235,8 @@ func TestNoRetryOnNonRetryableStatus(t *testing.T) {
 }
 
 func TestRetryContextCancellation(t *testing.T) {
+	t.Parallel()
+
 	mock := &failingMockClient{failCount: 10, statusCode: 503}
 
 	config := RetryConfig{
@@ -247,6 +269,8 @@ func TestRetryContextCancellation(t *testing.T) {
 }
 
 func TestDisableRetry(t *testing.T) {
+	t.Parallel()
+
 	mock := &failingMockClient{failCount: 2, statusCode: 503}
 
 	config := RetryConfig{MaxRetries: 0}
@@ -264,6 +288,8 @@ func TestDisableRetry(t *testing.T) {
 }
 
 func TestRetryDifferentStatusCodes(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name         string
 		statusCode   int
@@ -283,7 +309,10 @@ func TestRetryDifferentStatusCodes(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			mock := &failingMockClient{failCount: 10, statusCode: tc.statusCode}
 
 			config := RetryConfig{

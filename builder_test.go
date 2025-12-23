@@ -6,6 +6,8 @@ import (
 )
 
 func TestNewQueryBuilder(t *testing.T) {
+	t.Parallel()
+
 	qb := NewQueryBuilder()
 
 	if qb == nil {
@@ -19,6 +21,8 @@ func TestNewQueryBuilder(t *testing.T) {
 }
 
 func TestBuilderSingleNode(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Tag("amenity", "restaurant").
@@ -31,6 +35,8 @@ func TestBuilderSingleNode(t *testing.T) {
 }
 
 func TestBuilderBoundingBox(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		BBox(52.5, 13.4, 52.51, 13.41).
@@ -43,6 +49,8 @@ func TestBuilderBoundingBox(t *testing.T) {
 }
 
 func TestBuilderMultipleElements(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Way().
@@ -59,6 +67,8 @@ func TestBuilderMultipleElements(t *testing.T) {
 }
 
 func TestBuilderTagFilters(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		builder  *QueryBuilder
@@ -87,7 +97,10 @@ func TestBuilderTagFilters(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			query := tc.builder.Build()
 			if !strings.Contains(query, tc.expected) {
 				t.Errorf("expected %s in query:\n%s", tc.expected, query)
@@ -97,6 +110,8 @@ func TestBuilderTagFilters(t *testing.T) {
 }
 
 func TestBuilderMultipleFilters(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Tag("amenity", "restaurant").
@@ -118,6 +133,8 @@ func TestBuilderMultipleFilters(t *testing.T) {
 }
 
 func TestBuilderOutputModes(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name     string
 		builder  *QueryBuilder
@@ -151,7 +168,10 @@ func TestBuilderOutputModes(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			query := tc.builder.Build()
 			if !strings.Contains(query, tc.expected) {
 				t.Errorf("expected %s in query:\n%s", tc.expected, query)
@@ -161,6 +181,8 @@ func TestBuilderOutputModes(t *testing.T) {
 }
 
 func TestBuilderTimeout(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Timeout(60).
@@ -172,6 +194,8 @@ func TestBuilderTimeout(t *testing.T) {
 }
 
 func TestBuilderTimeoutReplacement(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Timeout(30).
@@ -188,6 +212,8 @@ func TestBuilderTimeoutReplacement(t *testing.T) {
 }
 
 func TestBuilderChaining(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Way().
@@ -218,6 +244,8 @@ func TestBuilderChaining(t *testing.T) {
 }
 
 func TestBuilderNoElements(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Tag("amenity", "restaurant").
 		Build()
@@ -237,6 +265,8 @@ func TestBuilderNoElements(t *testing.T) {
 }
 
 func TestBuilderStringer(t *testing.T) {
+	t.Parallel()
+
 	qb := NewQueryBuilder().Node().Tag("name", "Berlin")
 
 	str := qb.String()
@@ -248,6 +278,8 @@ func TestBuilderStringer(t *testing.T) {
 }
 
 func TestHelperFindRestaurants(t *testing.T) {
+	t.Parallel()
+
 	query := FindRestaurants(52.5, 13.4, 52.51, 13.41).Build()
 
 	if !strings.Contains(query, `["amenity"="restaurant"]`) {
@@ -268,6 +300,8 @@ func TestHelperFindRestaurants(t *testing.T) {
 }
 
 func TestHelperFindHighways(t *testing.T) {
+	t.Parallel()
+
 	query := FindHighways(52.5, 13.4, 52.51, 13.41, "primary").Build()
 
 	if !strings.Contains(query, `["highway"="primary"]`) {
@@ -284,6 +318,8 @@ func TestHelperFindHighways(t *testing.T) {
 }
 
 func TestHelperFindAmenity(t *testing.T) {
+	t.Parallel()
+
 	query := FindAmenity(52.5, 13.4, 52.51, 13.41, "cafe").Build()
 
 	if !strings.Contains(query, `["amenity"="cafe"]`) {
@@ -300,6 +336,8 @@ func TestHelperFindAmenity(t *testing.T) {
 }
 
 func TestHelperFindByTag(t *testing.T) {
+	t.Parallel()
+
 	query := FindByTag(52.5, 13.4, 52.51, 13.41, "leisure", "park").Build()
 
 	if !strings.Contains(query, `["leisure"="park"]`) {
@@ -316,6 +354,8 @@ func TestHelperFindByTag(t *testing.T) {
 }
 
 func TestBuilderComplexQuery(t *testing.T) {
+	t.Parallel()
+
 	// Test realistic complex query
 	query := NewQueryBuilder().
 		Node().
@@ -359,6 +399,8 @@ func TestBuilderComplexQuery(t *testing.T) {
 }
 
 func TestBuilderSingleElement(t *testing.T) {
+	t.Parallel()
+
 	// Single element should not have union syntax
 	query := NewQueryBuilder().
 		Node().
@@ -372,6 +414,8 @@ func TestBuilderSingleElement(t *testing.T) {
 }
 
 func TestBuilderThreeElements(t *testing.T) {
+	t.Parallel()
+
 	query := NewQueryBuilder().
 		Node().
 		Way().

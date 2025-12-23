@@ -48,7 +48,7 @@ func calculateBackoff(attempt int, config RetryConfig) time.Duration {
 
 	if config.Jitter {
 		// Add up to 25% jitter to prevent thundering herd
-		jitter := rand.Float64() * 0.25 * backoff
+		jitter := rand.Float64() * 0.25 * backoff //nolint:gosec // G404: jitter for backoff timing, not cryptographic
 		backoff += jitter
 	}
 
