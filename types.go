@@ -14,13 +14,13 @@ const (
 
 // Meta contains fields common for all OSM types.
 type Meta struct {
-	ID        int64              `json:"id"`
-	Timestamp *time.Time         `json:"timestamp,omitempty"`
-	Version   int64              `json:"version,omitempty"`
-	Changeset int64              `json:"changeset,omitempty"`
-	User      string             `json:"user,omitempty"`
-	UID       int64              `json:"uid,omitempty"`
-	Tags      map[string]string  `json:"tags,omitempty"`
+	ID        int64             `json:"id"`
+	Timestamp *time.Time        `json:"timestamp,omitempty"`
+	Version   int64             `json:"version,omitempty"`
+	Changeset int64             `json:"changeset,omitempty"`
+	User      string            `json:"user,omitempty"`
+	UID       int64             `json:"uid,omitempty"`
+	Tags      map[string]string `json:"tags,omitempty"`
 }
 
 // Node represents OSM node type.
@@ -66,9 +66,9 @@ type RelationMember struct {
 
 // Result returned by Query and contains parsed result of Overpass query.
 type Result struct {
-	Timestamp time.Time          `json:"timestamp"`
-	Count     int                `json:"count"`
-	Nodes     map[int64]*Node    `json:"nodes,omitempty"`
-	Ways      map[int64]*Way     `json:"ways,omitempty"`
+	Timestamp time.Time           `json:"timestamp"`
+	Count     int                 `json:"count"`
+	Nodes     map[int64]*Node     `json:"nodes,omitempty"`
+	Ways      map[int64]*Way      `json:"ways,omitempty"`
 	Relations map[int64]*Relation `json:"relations,omitempty"`
 }

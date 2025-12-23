@@ -48,10 +48,13 @@ type Options struct {
 
 // Result holds the expanded query and any extracted metadata.
 type Result struct {
-	Query string
-	Style string
+	Query  string
+	Style  string
 	Styles []string
-	Data  *DataSource
+	// ParsedStyles contains the parsed MapCSS stylesheets from {{style:...}} macros.
+	// Each element corresponds to the same index in Styles.
+	ParsedStyles []*Stylesheet
+	Data         *DataSource
 	// EndpointOverride suggests an Overpass API endpoint derived from {{data:overpass,server=...}}.
 	EndpointOverride string
 	// DataServer suggests the backend server from {{data:...,server=...}} (overpass or sql).
@@ -118,6 +121,14 @@ func Expand(query string, opts Options) (Result, error) {
 			res.Style = style
 			if style != "" {
 				res.Styles = append(res.Styles, style)
+				// Parse the MapCSS stylesheet
+				parsed, err := ParseMapCSS(style)
+				if err != nil {
+					// Store nil for unparseable styles, don't fail the expansion
+					res.ParsedStyles = append(res.ParsedStyles, nil)
+				} else {
+					res.ParsedStyles = append(res.ParsedStyles, parsed)
+				}
 			}
 			return "", nil
 		}

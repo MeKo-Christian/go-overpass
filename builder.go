@@ -7,11 +7,11 @@ import (
 
 // QueryBuilder provides fluent API for building Overpass QL queries
 type QueryBuilder struct {
-	elements   []string        // element type filters
-	bbox       *BoundingBox    // bounding box constraint
-	filters    []TagFilter     // tag filters
-	outputMode string          // output mode
-	settings   []string        // query settings like [out:json]
+	elements   []string     // element type filters
+	bbox       *BoundingBox // bounding box constraint
+	filters    []TagFilter  // tag filters
+	outputMode string       // output mode
+	settings   []string     // query settings like [out:json]
 }
 
 // BoundingBox represents geographic bounds (south, west, north, east)

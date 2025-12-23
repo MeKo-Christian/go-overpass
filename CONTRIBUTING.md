@@ -5,6 +5,7 @@ Thank you for your interest in contributing to go-overpass!
 ## Development Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/MeKo-Christian/go-overpass.git
    cd go-overpass
@@ -21,6 +22,7 @@ Thank you for your interest in contributing to go-overpass!
 ## Running Tests
 
 ### Unit Tests
+
 ```bash
 # Run all unit tests
 go test -v ./...
@@ -33,6 +35,7 @@ go test -v -race ./...
 ```
 
 ### Integration Tests
+
 Integration tests require network access to the real Overpass API:
 
 ```bash
@@ -40,6 +43,7 @@ go test -v -tags=integration ./...
 ```
 
 ### Benchmarks
+
 ```bash
 go test -bench=. ./...
 ```
@@ -47,6 +51,7 @@ go test -bench=. ./...
 ## Code Quality
 
 ### Linting
+
 We use golangci-lint for code quality:
 
 ```bash
@@ -54,6 +59,7 @@ golangci-lint run
 ```
 
 ### Code Style
+
 - Follow standard Go conventions
 - Use `gofmt` for formatting (done automatically by most editors)
 - Write clear, descriptive variable and function names
@@ -62,6 +68,7 @@ golangci-lint run
 ## Making Changes
 
 ### Branch Strategy
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Make your changes
@@ -70,6 +77,7 @@ golangci-lint run
 6. Commit with clear messages
 
 ### Commit Messages
+
 Write clear, concise commit messages:
 
 ```
@@ -81,6 +89,7 @@ Add context support to Query method
 ```
 
 ### Pull Request Process
+
 1. **Ensure all tests pass**
 2. **Update documentation** if needed
 3. **Add tests** for new features
@@ -90,22 +99,26 @@ Add context support to Query method
 ## Coding Guidelines
 
 ### Error Handling
+
 - Use error wrapping with `fmt.Errorf("context: %w", err)`
 - Return detailed error messages
 - Don't panic in library code
 
 ### Context Usage
+
 - Always accept `context.Context` for I/O operations
 - Respect context cancellation
 - Use `context.Background()` as default
 
 ### Testing
+
 - Write table-driven tests when possible
 - Test error cases
 - Use meaningful test names
 - Keep tests focused and simple
 
 ### Documentation
+
 - Document all exported functions and types
 - Include usage examples in documentation
 - Update README for user-facing changes

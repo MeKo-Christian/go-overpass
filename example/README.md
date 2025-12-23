@@ -16,6 +16,7 @@ go run main.go
 ### 1. Basic Query ([basic/](basic/))
 
 The simplest example showing how to:
+
 - Create a default client
 - Query for a specific node
 - Access node properties and tags
@@ -28,6 +29,7 @@ go run main.go
 ### 2. Custom Client ([custom_client/](custom_client/))
 
 Demonstrates advanced client configuration:
+
 - Custom HTTP client with timeout
 - Custom Overpass API endpoint
 - Parallel request limiting
@@ -41,6 +43,7 @@ go run main.go
 ### 3. Ways and Relations ([ways_and_relations/](ways_and_relations/))
 
 Shows how to work with complex OSM elements:
+
 - Querying ways (streets, paths, etc.)
 - Accessing way nodes and geometry
 - Working with relations
@@ -54,6 +57,7 @@ go run main.go
 ### 4. Area Query ([area_query/](area_query/))
 
 Demonstrates bounding box queries:
+
 - Using bbox parameter in queries
 - Querying multiple element types
 - Handling query bounds
@@ -77,6 +81,7 @@ out;
 ## Common Query Patterns
 
 ### Query by ID
+
 ```
 [out:json];
 node(123456);
@@ -84,6 +89,7 @@ out;
 ```
 
 ### Query by Bounding Box
+
 ```
 [out:json];
 node(south,west,north,east);
@@ -91,6 +97,7 @@ out;
 ```
 
 ### Query by Tag
+
 ```
 [out:json];
 node["amenity"="restaurant"];
@@ -98,6 +105,7 @@ out;
 ```
 
 ### Query with Geometry
+
 ```
 [out:json];
 way(123456);
