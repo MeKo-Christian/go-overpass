@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// RetryConfig holds retry behavior configuration
+// RetryConfig holds retry behavior configuration.
 type RetryConfig struct {
 	MaxRetries        int           // Maximum retry attempts (default: 3)
 	InitialBackoff    time.Duration // Initial backoff duration (default: 1s)
@@ -18,7 +18,7 @@ type RetryConfig struct {
 	Jitter            bool          // Add randomization to prevent thundering herd (default: true)
 }
 
-// DefaultRetryConfig returns sensible defaults
+// DefaultRetryConfig returns sensible defaults.
 func DefaultRetryConfig() RetryConfig {
 	return RetryConfig{
 		MaxRetries:        3,
@@ -29,7 +29,7 @@ func DefaultRetryConfig() RetryConfig {
 	}
 }
 
-// isRetryableStatus determines if HTTP status code warrants retry
+// isRetryableStatus determines if HTTP status code warrants retry.
 func isRetryableStatus(statusCode int) bool {
 	return statusCode == 429 || // Too Many Requests
 		statusCode == 500 || // Internal Server Error
@@ -38,7 +38,7 @@ func isRetryableStatus(statusCode int) bool {
 		statusCode == 504 // Gateway Timeout
 }
 
-// calculateBackoff computes next backoff duration
+// calculateBackoff computes next backoff duration.
 func calculateBackoff(attempt int, config RetryConfig) time.Duration {
 	backoff := float64(config.InitialBackoff) * math.Pow(config.BackoffMultiplier, float64(attempt))
 
@@ -55,7 +55,7 @@ func calculateBackoff(attempt int, config RetryConfig) time.Duration {
 	return time.Duration(backoff)
 }
 
-// retryableHTTPPost wraps httpPost with retry logic
+// retryableHTTPPost wraps httpPost with retry logic.
 func (c *Client) retryableHTTPPost(ctx context.Context, query string) ([]byte, error) {
 	var lastErr error
 

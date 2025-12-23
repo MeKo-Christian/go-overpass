@@ -41,32 +41,39 @@ func expandGeocode(content string, opts Options, format QueryFormat) (string, er
 		if !ok || result.OSMID <= 0 {
 			return "", ErrGeocodeData
 		}
+
 		if format == FormatXML {
 			return fmt.Sprintf(`type="%s" ref="%d"`, t, result.OSMID), nil
 		}
+
 		return fmt.Sprintf("%s(%d)", t, result.OSMID), nil
 	case "geocodeArea":
 		areaID := result.AreaID
 		if areaID == 0 {
 			var err error
+
 			areaID, err = deriveAreaID(result)
 			if err != nil {
 				return "", err
 			}
 		}
+
 		if format == FormatXML {
 			return fmt.Sprintf(`type="area" ref="%d"`, areaID), nil
 		}
+
 		return fmt.Sprintf("area(%d)", areaID), nil
 	case "geocodeBbox":
 		if result.BBox == nil {
 			return "", ErrGeocodeData
 		}
+
 		return formatBBox(*result.BBox, format), nil
 	case "geocodeCoords":
 		if result.Center == nil {
 			return "", ErrGeocodeData
 		}
+
 		return formatCenter(*result.Center, format), nil
 	default:
 		return "", ErrBadMacro
@@ -78,7 +85,9 @@ func parseGeocodeMacro(content string) (string, string, bool) {
 	if len(parts) != 2 {
 		return "", "", false
 	}
+
 	kind := strings.TrimSpace(parts[0])
+
 	query := strings.TrimSpace(parts[1])
 	if kind == "" || query == "" {
 		return "", "", false

@@ -15,9 +15,11 @@ func TestDefaultCacheConfig(t *testing.T) {
 	if config.Enabled {
 		t.Error("cache should be disabled by default")
 	}
+
 	if config.TTL != 5*time.Minute {
 		t.Errorf("expected TTL=5m, got %v", config.TTL)
 	}
+
 	if config.MaxEntries != 1000 {
 		t.Errorf("expected MaxEntries=1000, got %d", config.MaxEntries)
 	}
@@ -235,7 +237,7 @@ func TestClientCacheIntegration(t *testing.T) {
 	successBody := []byte(`{"osm3s":{},"elements":[{"type":"node","id":1}]}`)
 	mock := &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       io.NopCloser(bytes.NewReader(successBody)),
 		},
 	}
@@ -259,7 +261,7 @@ func TestClientCacheIntegration(t *testing.T) {
 
 	// Create new mock that would return different result
 	mock.res = &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader([]byte(`{"osm3s":{},"elements":[{"type":"node","id":999}]}`))),
 	}
 

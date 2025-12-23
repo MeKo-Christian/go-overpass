@@ -89,6 +89,7 @@ var (
 // Unsupported geocode macros return an error for now.
 func Expand(query string, opts Options) (Result, error) {
 	format := detectFormat(query, opts.Format)
+
 	shortcuts := map[string]string{}
 	for k, v := range opts.Shortcuts {
 		shortcuts[k] = v
@@ -99,6 +100,7 @@ func Expand(query string, opts Options) (Result, error) {
 		if ok {
 			shortcuts[name] = value
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -106,6 +108,7 @@ func Expand(query string, opts Options) (Result, error) {
 	}
 
 	var res Result
+
 	expanded, err := replaceMacros(query, func(content string) (string, error) {
 		content = strings.TrimSpace(content)
 		if content == "" {
@@ -118,6 +121,7 @@ func Expand(query string, opts Options) (Result, error) {
 
 		if strings.HasPrefix(content, "style:") {
 			style := strings.TrimSpace(strings.TrimPrefix(content, "style:"))
+
 			res.Style = style
 			if style != "" {
 				res.Styles = append(res.Styles, style)
@@ -130,6 +134,7 @@ func Expand(query string, opts Options) (Result, error) {
 					res.ParsedStyles = append(res.ParsedStyles, parsed)
 				}
 			}
+
 			return "", nil
 		}
 
@@ -138,15 +143,18 @@ func Expand(query string, opts Options) (Result, error) {
 			if err != nil {
 				return "", err
 			}
+
 			res.Data = ds
 			if server, ok := ds.Options["server"]; ok {
 				res.DataServer = server
 			}
+
 			if strings.EqualFold(ds.Mode, "overpass") {
 				if server, ok := ds.Options["server"]; ok {
 					res.EndpointOverride = normalizeEndpoint(server)
 				}
 			}
+
 			return "", nil
 		}
 
@@ -158,6 +166,7 @@ func Expand(query string, opts Options) (Result, error) {
 			if opts.BBox == nil {
 				return "", ErrMissingBBox
 			}
+
 			return formatBBox(*opts.BBox, format), nil
 		}
 
@@ -165,6 +174,7 @@ func Expand(query string, opts Options) (Result, error) {
 			if opts.Center == nil {
 				return "", ErrMissingCenter
 			}
+
 			return formatCenter(*opts.Center, format), nil
 		}
 
@@ -173,6 +183,7 @@ func Expand(query string, opts Options) (Result, error) {
 			if err != nil {
 				return "", err
 			}
+
 			return t, nil
 		}
 
@@ -187,6 +198,7 @@ func Expand(query string, opts Options) (Result, error) {
 	}
 
 	res.Query = expanded
+
 	return res, nil
 }
 
@@ -196,6 +208,7 @@ func ApplyEndpointOverride(fallback string, res Result) string {
 	if res.EndpointOverride == "" {
 		return fallback
 	}
+
 	return res.EndpointOverride
 }
 
@@ -204,21 +217,27 @@ func normalizeEndpoint(raw string) string {
 	if trimmed == "" {
 		return ""
 	}
+
 	if strings.HasSuffix(trimmed, "/") {
 		trimmed = strings.TrimSuffix(trimmed, "/")
 	}
+
 	if strings.HasSuffix(trimmed, "/api") {
 		return trimmed + "/interpreter"
 	}
+
 	if strings.HasSuffix(trimmed, "/api/interpreter") {
 		return trimmed
 	}
+
 	if strings.Contains(trimmed, "/api/interpreter") {
 		return trimmed
 	}
+
 	if strings.HasSuffix(trimmed, "/api/") {
 		return strings.TrimSuffix(trimmed, "/") + "/interpreter"
 	}
+
 	return trimmed
 }
 
@@ -226,9 +245,11 @@ func detectFormat(query string, format QueryFormat) QueryFormat {
 	if format != FormatAuto {
 		return format
 	}
+
 	if strings.Contains(query, "<osm-script") || strings.Contains(query, "<query") {
 		return FormatXML
 	}
+
 	return FormatQL
 }
 
@@ -279,10 +300,12 @@ func parseShortcutDefinition(content string) (string, string, bool) {
 	if len(parts) != 2 {
 		return "", "", false
 	}
+
 	name := strings.TrimSpace(parts[0])
 	if name == "" || strings.Contains(name, ":") {
 		return "", "", false
 	}
+
 	return name, strings.TrimSpace(parts[1]), true
 }
 
@@ -293,6 +316,7 @@ func parseDataSource(raw string) (*DataSource, error) {
 	}
 
 	parts := strings.Split(raw, ",")
+
 	mode := strings.TrimSpace(parts[0])
 	if mode == "" {
 		return nil, ErrBadMacro
@@ -300,20 +324,25 @@ func parseDataSource(raw string) (*DataSource, error) {
 
 	options := map[string]string{}
 	parsed := DataOptions{}
+
 	for _, part := range parts[1:] {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
+
 		kv := strings.SplitN(part, "=", 2)
 		if len(kv) != 2 {
 			return nil, ErrBadMacro
 		}
+
 		key := strings.TrimSpace(kv[0])
 		if key == "" {
 			return nil, ErrBadMacro
 		}
+
 		value := strings.TrimSpace(kv[1])
+
 		options[key] = value
 		if key == "server" {
 			parsed.Server = value
@@ -321,6 +350,7 @@ func parseDataSource(raw string) (*DataSource, error) {
 			if parsed.Params == nil {
 				parsed.Params = map[string]string{}
 			}
+
 			parsed.Params[key] = value
 		}
 	}
@@ -343,6 +373,7 @@ func expandDate(content string, now time.Time) (string, error) {
 	if raw == "" {
 		return now.Format(time.RFC3339Nano), nil
 	}
+
 	if !strings.HasPrefix(raw, ":") {
 		return "", ErrBadMacro
 	}
@@ -417,37 +448,51 @@ func scanMacros(query string, fn func(start int, end int, content string) error)
 		if open == -1 {
 			return nil
 		}
+
 		open += i
+
 		close := strings.Index(query[open+2:], "}}")
 		if close == -1 {
 			return ErrBadMacro
 		}
+
 		close = close + open + 2
+
 		content := query[open+2 : close]
-		if err := fn(open, close+2, content); err != nil {
+		err := fn(open, close+2, content)
+		if err != nil {
 			return err
 		}
+
 		i = close + 2
 	}
+
 	return nil
 }
 
 func replaceMacros(query string, replace func(content string) (string, error)) (string, error) {
 	var out bytes.Buffer
 	last := 0
+
 	err := scanMacros(query, func(start int, end int, content string) error {
 		out.WriteString(query[last:start])
+
 		value, err := replace(content)
 		if err != nil {
 			return err
 		}
+
 		out.WriteString(value)
+
 		last = end
+
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	out.WriteString(query[last:])
+
 	return out.String(), nil
 }

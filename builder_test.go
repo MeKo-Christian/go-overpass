@@ -52,6 +52,7 @@ func TestBuilderMultipleElements(t *testing.T) {
 	if !strings.Contains(query, "(") {
 		t.Error("expected union syntax for multiple elements")
 	}
+
 	if !strings.Contains(query, "node") || !strings.Contains(query, "way") {
 		t.Error("missing element types")
 	}
@@ -106,9 +107,11 @@ func TestBuilderMultipleFilters(t *testing.T) {
 	if !strings.Contains(query, `["amenity"="restaurant"]`) {
 		t.Error("missing amenity filter")
 	}
+
 	if !strings.Contains(query, `["cuisine"="italian"]`) {
 		t.Error("missing cuisine filter")
 	}
+
 	if !strings.Contains(query, `["phone"]`) {
 		t.Error("missing phone exists filter")
 	}
@@ -178,6 +181,7 @@ func TestBuilderTimeoutReplacement(t *testing.T) {
 	if !strings.Contains(query, "[timeout:60]") {
 		t.Errorf("expected timeout:60 in query: %s", query)
 	}
+
 	if strings.Contains(query, "[timeout:30]") {
 		t.Errorf("old timeout should be replaced: %s", query)
 	}
@@ -222,9 +226,11 @@ func TestBuilderNoElements(t *testing.T) {
 	if !strings.Contains(query, "node") {
 		t.Error("expected node when no elements specified")
 	}
+
 	if !strings.Contains(query, "way") {
 		t.Error("expected way when no elements specified")
 	}
+
 	if !strings.Contains(query, "relation") {
 		t.Error("expected relation when no elements specified")
 	}
@@ -247,12 +253,15 @@ func TestHelperFindRestaurants(t *testing.T) {
 	if !strings.Contains(query, `["amenity"="restaurant"]`) {
 		t.Error("missing restaurant filter")
 	}
+
 	if !strings.Contains(query, "out center;") {
 		t.Error("missing center output")
 	}
+
 	if !strings.Contains(query, "node") {
 		t.Error("missing node element type")
 	}
+
 	if !strings.Contains(query, "way") {
 		t.Error("missing way element type")
 	}
@@ -264,9 +273,11 @@ func TestHelperFindHighways(t *testing.T) {
 	if !strings.Contains(query, `["highway"="primary"]`) {
 		t.Error("missing highway filter")
 	}
+
 	if !strings.Contains(query, "way") {
 		t.Error("missing way element type")
 	}
+
 	if !strings.Contains(query, "out geom;") {
 		t.Error("missing geom output")
 	}
@@ -278,9 +289,11 @@ func TestHelperFindAmenity(t *testing.T) {
 	if !strings.Contains(query, `["amenity"="cafe"]`) {
 		t.Error("missing amenity filter")
 	}
+
 	if !strings.Contains(query, "node") {
 		t.Error("missing node element type")
 	}
+
 	if !strings.Contains(query, "way") {
 		t.Error("missing way element type")
 	}
@@ -292,9 +305,11 @@ func TestHelperFindByTag(t *testing.T) {
 	if !strings.Contains(query, `["leisure"="park"]`) {
 		t.Error("missing tag filter")
 	}
+
 	if !strings.Contains(query, "node") || !strings.Contains(query, "way") {
 		t.Error("missing element types")
 	}
+
 	if !strings.Contains(query, "relation") {
 		t.Error("missing relation element type")
 	}
@@ -323,6 +338,7 @@ func TestBuilderComplexQuery(t *testing.T) {
 	if !strings.HasPrefix(query, "[") {
 		t.Error("query should start with settings")
 	}
+
 	if !strings.HasSuffix(query, ";") {
 		t.Error("query should end with semicolon")
 	}
@@ -367,9 +383,11 @@ func TestBuilderThreeElements(t *testing.T) {
 	if !strings.Contains(query, "node") {
 		t.Error("missing node")
 	}
+
 	if !strings.Contains(query, "way") {
 		t.Error("missing way")
 	}
+
 	if !strings.Contains(query, "relation") {
 		t.Error("missing relation")
 	}

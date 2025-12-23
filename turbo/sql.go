@@ -14,6 +14,7 @@ func SQLDataConfigFromResult(res Result) *SQLDataConfig {
 	if res.Data == nil {
 		return nil
 	}
+
 	if !strings.EqualFold(res.Data.Mode, "sql") {
 		return nil
 	}
@@ -26,7 +27,9 @@ func SQLDataConfigFromResult(res Result) *SQLDataConfig {
 		if k == "server" {
 			continue
 		}
+
 		cfg.Params[k] = v
 	}
+
 	return cfg
 }

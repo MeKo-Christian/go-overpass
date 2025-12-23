@@ -9,5 +9,6 @@ func NewClientWithOverride(fallbackEndpoint string, maxParallel int, httpClient 
 	if endpoint == "" {
 		return overpass.New()
 	}
+
 	return overpass.NewWithSettings(endpoint, maxParallel, httpClient)
 }

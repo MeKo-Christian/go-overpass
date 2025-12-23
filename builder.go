@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// QueryBuilder provides fluent API for building Overpass QL queries
+// QueryBuilder provides fluent API for building Overpass QL queries.
 type QueryBuilder struct {
 	elements   []string     // element type filters
 	bbox       *BoundingBox // bounding box constraint
@@ -14,19 +14,19 @@ type QueryBuilder struct {
 	settings   []string     // query settings like [out:json]
 }
 
-// BoundingBox represents geographic bounds (south, west, north, east)
+// BoundingBox represents geographic bounds (south, west, north, east).
 type BoundingBox struct {
 	South, West, North, East float64
 }
 
-// TagFilter represents OSM tag filtering
+// TagFilter represents OSM tag filtering.
 type TagFilter struct {
 	Key      string
 	Value    string
 	Operator string // "=", "!=", "~", "exists"
 }
 
-// NewQueryBuilder creates new query builder with [out:json] default
+// NewQueryBuilder creates new query builder with [out:json] default.
 func NewQueryBuilder() *QueryBuilder {
 	return &QueryBuilder{
 		elements:   []string{},
@@ -36,25 +36,25 @@ func NewQueryBuilder() *QueryBuilder {
 	}
 }
 
-// Node adds node element type to query
+// Node adds node element type to query.
 func (qb *QueryBuilder) Node() *QueryBuilder {
 	qb.elements = append(qb.elements, "node")
 	return qb
 }
 
-// Way adds way element type to query
+// Way adds way element type to query.
 func (qb *QueryBuilder) Way() *QueryBuilder {
 	qb.elements = append(qb.elements, "way")
 	return qb
 }
 
-// Relation adds relation element type to query
+// Relation adds relation element type to query.
 func (qb *QueryBuilder) Relation() *QueryBuilder {
 	qb.elements = append(qb.elements, "relation")
 	return qb
 }
 
-// BBox sets bounding box constraint
+// BBox sets bounding box constraint.
 func (qb *QueryBuilder) BBox(south, west, north, east float64) *QueryBuilder {
 	qb.bbox = &BoundingBox{
 		South: south,
@@ -62,79 +62,84 @@ func (qb *QueryBuilder) BBox(south, west, north, east float64) *QueryBuilder {
 		North: north,
 		East:  east,
 	}
+
 	return qb
 }
 
-// Tag adds exact tag match filter
+// Tag adds exact tag match filter.
 func (qb *QueryBuilder) Tag(key, value string) *QueryBuilder {
 	qb.filters = append(qb.filters, TagFilter{
 		Key:      key,
 		Value:    value,
 		Operator: "=",
 	})
+
 	return qb
 }
 
-// TagExists adds filter for tag existence (any value)
+// TagExists adds filter for tag existence (any value).
 func (qb *QueryBuilder) TagExists(key string) *QueryBuilder {
 	qb.filters = append(qb.filters, TagFilter{
 		Key:      key,
 		Operator: "exists",
 	})
+
 	return qb
 }
 
-// TagNot adds negative tag match filter
+// TagNot adds negative tag match filter.
 func (qb *QueryBuilder) TagNot(key, value string) *QueryBuilder {
 	qb.filters = append(qb.filters, TagFilter{
 		Key:      key,
 		Value:    value,
 		Operator: "!=",
 	})
+
 	return qb
 }
 
-// TagRegex adds regex tag value filter
+// TagRegex adds regex tag value filter.
 func (qb *QueryBuilder) TagRegex(key, pattern string) *QueryBuilder {
 	qb.filters = append(qb.filters, TagFilter{
 		Key:      key,
 		Value:    pattern,
 		Operator: "~",
 	})
+
 	return qb
 }
 
-// Output sets output mode (body, skel, ids, tags, meta, center, geom, bb)
+// Output sets output mode (body, skel, ids, tags, meta, center, geom, bb).
 func (qb *QueryBuilder) Output(mode string) *QueryBuilder {
 	qb.outputMode = "out " + mode
 	return qb
 }
 
-// OutputBody outputs all information (default)
+// OutputBody outputs all information (default).
 func (qb *QueryBuilder) OutputBody() *QueryBuilder {
 	qb.outputMode = "out body"
 	return qb
 }
 
-// OutputGeom outputs with geometry (for ways/relations)
+// OutputGeom outputs with geometry (for ways/relations).
 func (qb *QueryBuilder) OutputGeom() *QueryBuilder {
 	qb.outputMode = "out geom"
 	return qb
 }
 
-// OutputCenter outputs center point only
+// OutputCenter outputs center point only.
 func (qb *QueryBuilder) OutputCenter() *QueryBuilder {
 	qb.outputMode = "out center"
 	return qb
 }
 
-// OutputMeta outputs with metadata
+// OutputMeta outputs with metadata.
 func (qb *QueryBuilder) OutputMeta() *QueryBuilder {
 	qb.outputMode = "out meta"
 	return qb
 }
 
-// Timeout sets query timeout in seconds
+// Timeout sets query timeout in seconds.
 func (qb *QueryBuilder) Timeout(seconds int) *QueryBuilder {
 	// Remove existing timeout if any
 	for i, s := range qb.settings {
@@ -143,11 +148,13 @@ func (qb *QueryBuilder) Timeout(seconds int) *QueryBuilder {
 			break
 		}
 	}
+
 	qb.settings = append(qb.settings, fmt.Sprintf("timeout:%d", seconds))
+
 	return qb
 }
 
-// Build constructs the Overpass QL query string
+// Build constructs the Overpass QL query string.
 func (qb *QueryBuilder) Build() string {
 	var parts []string
 
@@ -208,14 +215,14 @@ func (qb *QueryBuilder) Build() string {
 	return strings.Join(parts, "")
 }
 
-// String implements Stringer interface
+// String implements Stringer interface.
 func (qb *QueryBuilder) String() string {
 	return qb.Build()
 }
 
 // Helper functions for common queries
 
-// FindRestaurants creates query for restaurants in bounding box
+// FindRestaurants creates query for restaurants in bounding box.
 func FindRestaurants(south, west, north, east float64) *QueryBuilder {
 	return NewQueryBuilder().
 		Node().
@@ -225,7 +232,7 @@ func FindRestaurants(south, west, north, east float64) *QueryBuilder {
 		OutputCenter()
 }
 
-// FindHighways creates query for highways in bounding box
+// FindHighways creates query for highways in bounding box.
 func FindHighways(south, west, north, east float64, highwayType string) *QueryBuilder {
 	return NewQueryBuilder().
 		Way().
@@ -234,7 +241,7 @@ func FindHighways(south, west, north, east float64, highwayType string) *QueryBu
 		OutputGeom()
 }
 
-// FindAmenity creates query for amenity type in bounding box
+// FindAmenity creates query for amenity type in bounding box.
 func FindAmenity(south, west, north, east float64, amenityType string) *QueryBuilder {
 	return NewQueryBuilder().
 		Node().
@@ -244,7 +251,7 @@ func FindAmenity(south, west, north, east float64, amenityType string) *QueryBui
 		OutputCenter()
 }
 
-// FindByTag creates query for elements with specific tag in bounding box
+// FindByTag creates query for elements with specific tag in bounding box.
 func FindByTag(south, west, north, east float64, key, value string) *QueryBuilder {
 	return NewQueryBuilder().
 		Node().

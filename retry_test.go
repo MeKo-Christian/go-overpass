@@ -18,15 +18,19 @@ func TestDefaultRetryConfig(t *testing.T) {
 	if config.MaxRetries != 3 {
 		t.Errorf("expected MaxRetries=3, got %d", config.MaxRetries)
 	}
+
 	if config.InitialBackoff != time.Second {
 		t.Errorf("expected InitialBackoff=1s, got %v", config.InitialBackoff)
 	}
+
 	if config.MaxBackoff != 30*time.Second {
 		t.Errorf("expected MaxBackoff=30s, got %v", config.MaxBackoff)
 	}
+
 	if config.BackoffMultiplier != 2.0 {
 		t.Errorf("expected BackoffMultiplier=2.0, got %f", config.BackoffMultiplier)
 	}
+
 	if !config.Jitter {
 		t.Error("expected Jitter=true")
 	}
@@ -102,7 +106,7 @@ func TestCalculateBackoffWithJitter(t *testing.T) {
 	}
 }
 
-// Mock client that fails N times then succeeds
+// Mock client that fails N times then succeeds.
 type failingMockClient struct {
 	failCount   int
 	currentFail int
@@ -114,6 +118,7 @@ func (m *failingMockClient) Do(req *http.Request) (*http.Response, error) {
 
 	if m.currentFail <= m.failCount {
 		body := []byte(fmt.Sprintf("error %d", m.currentFail))
+
 		return &http.Response{
 			StatusCode: m.statusCode,
 			Body:       io.NopCloser(bytes.NewReader(body)),
@@ -122,8 +127,9 @@ func (m *failingMockClient) Do(req *http.Request) (*http.Response, error) {
 
 	// Success after failCount attempts
 	successBody := []byte(`{"osm3s":{},"elements":[]}`)
+
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader(successBody)),
 	}, nil
 }
@@ -179,7 +185,6 @@ func TestRetryExhaustion(t *testing.T) {
 	client.retryConfig = config
 
 	_, err := client.QueryContext(context.Background(), "[out:json];node(1);out;")
-
 	if err == nil {
 		t.Fatal("expected error after exhausting retries")
 	}
@@ -200,7 +205,6 @@ func TestNoRetryOnNonRetryableStatus(t *testing.T) {
 	client.retryConfig = DefaultRetryConfig()
 
 	_, err := client.QueryContext(context.Background(), "[out:json];node(1);out;")
-
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -228,7 +232,6 @@ func TestRetryContextCancellation(t *testing.T) {
 	defer cancel()
 
 	_, err := client.QueryContext(ctx, "[out:json];node(1);out;")
-
 	if err == nil {
 		t.Fatal("expected error from context cancellation")
 	}
@@ -251,7 +254,6 @@ func TestDisableRetry(t *testing.T) {
 	client.retryConfig = config
 
 	_, err := client.QueryContext(context.Background(), "[out:json];node(1);out;")
-
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -296,7 +298,6 @@ func TestRetryDifferentStatusCodes(t *testing.T) {
 			client.retryConfig = config
 
 			_, err := client.QueryContext(context.Background(), "[out:json];node(1);out;")
-
 			if err == nil {
 				t.Fatal("expected error")
 			}

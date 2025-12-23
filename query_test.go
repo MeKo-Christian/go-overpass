@@ -65,6 +65,7 @@ func TestUnmarshal(t *testing.T) {
 					n.ID = id
 				}
 			}
+
 			if tc.want.Ways == nil {
 				tc.want.Ways = map[int64]*Way{}
 			} else {
@@ -73,6 +74,7 @@ func TestUnmarshal(t *testing.T) {
 					if w.Nodes == nil {
 						w.Nodes = []*Node{}
 					}
+
 					if w.Geometry == nil {
 						w.Geometry = []Point{}
 					}
@@ -102,9 +104,9 @@ func TestQueryErrors(t *testing.T) {
 		want string
 	}{
 		{nil, errors.New("request fail"), "http error: request fail"},
-		{&http.Response{StatusCode: 400, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: 400 Bad Request"},
-		{&http.Response{StatusCode: 200, Body: io.NopCloser(iotest.ErrReader(errors.New("read fail")))}, nil, "http error: read fail"},
-		{&http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: unexpected end of JSON input"},
+		{&http.Response{StatusCode: http.StatusBadRequest, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: 400 Bad Request"},
+		{&http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(iotest.ErrReader(errors.New("read fail")))}, nil, "http error: read fail"},
+		{&http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: unexpected end of JSON input"},
 	}
 
 	for i, tc := range testCases {
@@ -130,7 +132,7 @@ func (m *mockHttpClient) Do(req *http.Request) (*http.Response, error) {
 	return m.res, m.err
 }
 
-// newTestBody creates an io.ReadCloser from a string for testing
+// newTestBody creates an io.ReadCloser from a string for testing.
 func newTestBody(s string) io.ReadCloser {
 	return io.NopCloser(bytes.NewReader([]byte(s)))
 }

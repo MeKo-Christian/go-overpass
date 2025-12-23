@@ -95,6 +95,7 @@ func TestGetCategory(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.GetCategory()
 			if got != tc.expected {
 				t.Errorf("expected %s, got %s", tc.expected, got)
@@ -174,6 +175,7 @@ func TestGetSubcategory(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.GetSubcategory()
 			if got != tc.expected {
 				t.Errorf("expected %s, got %s", tc.expected, got)
@@ -254,6 +256,7 @@ func TestCategoryHelpers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := tc.method(&meta)
 			if got != tc.expect {
 				t.Errorf("expected %v, got %v", tc.expect, got)
@@ -288,6 +291,7 @@ func TestGetName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.GetName()
 			if got != tc.expected {
 				t.Errorf("expected %s, got %s", tc.expected, got)
@@ -307,9 +311,11 @@ func TestHasTag(t *testing.T) {
 	if !meta.HasTag("amenity") {
 		t.Error("expected amenity tag to exist")
 	}
+
 	if !meta.HasTag("name") {
 		t.Error("expected name tag to exist")
 	}
+
 	if meta.HasTag("missing") {
 		t.Error("expected missing tag to not exist")
 	}
@@ -325,9 +331,11 @@ func TestGetTag(t *testing.T) {
 	if got := meta.GetTag("amenity", "default"); got != "restaurant" {
 		t.Errorf("expected restaurant, got %s", got)
 	}
+
 	if got := meta.GetTag("missing", "default"); got != "default" {
 		t.Errorf("expected default, got %s", got)
 	}
+
 	if got := meta.GetTag("missing", ""); got != "" {
 		t.Errorf("expected empty string, got %s", got)
 	}
@@ -344,12 +352,15 @@ func TestMatchesFilter(t *testing.T) {
 	if !meta.MatchesFilter("amenity", "restaurant") {
 		t.Error("expected match on amenity=restaurant")
 	}
+
 	if meta.MatchesFilter("amenity", "cafe") {
 		t.Error("expected no match on amenity=cafe")
 	}
+
 	if meta.MatchesFilter("missing", "value") {
 		t.Error("expected no match on missing tag")
 	}
+
 	if !meta.MatchesFilter("cuisine", "italian") {
 		t.Error("expected match on cuisine=italian")
 	}
@@ -391,6 +402,7 @@ func TestIsRoad(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.IsRoad()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
@@ -437,6 +449,7 @@ func TestIsFoodRelated(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.IsFoodRelated()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
@@ -464,6 +477,7 @@ func TestIsEducation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.IsEducation()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
@@ -491,6 +505,7 @@ func TestIsHealthcare(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := Meta{Tags: tc.tags}
+
 			got := meta.IsHealthcare()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
@@ -526,12 +541,15 @@ func TestEmptyTags(t *testing.T) {
 	if meta.GetCategory() != CategoryUnknown {
 		t.Error("expected unknown category for empty tags")
 	}
+
 	if meta.GetSubcategory() != "" {
 		t.Error("expected empty subcategory for empty tags")
 	}
+
 	if meta.GetName() != "" {
 		t.Error("expected empty name for empty tags")
 	}
+
 	if meta.HasTag("anything") {
 		t.Error("expected no tags")
 	}
@@ -594,12 +612,15 @@ func TestRealWorldExample(t *testing.T) {
 	if !restaurant.IsAmenity() {
 		t.Error("expected amenity")
 	}
+
 	if !restaurant.IsFoodRelated() {
 		t.Error("expected food related")
 	}
+
 	if restaurant.GetName() != "La Bella Vita" {
 		t.Errorf("expected name La Bella Vita, got %s", restaurant.GetName())
 	}
+
 	if !restaurant.HasTag("wheelchair") {
 		t.Error("expected wheelchair tag")
 	}
@@ -616,12 +637,15 @@ func TestRealWorldExample(t *testing.T) {
 	if !road.IsTransportation() {
 		t.Error("expected transportation")
 	}
+
 	if !road.IsRoad() {
 		t.Error("expected road")
 	}
+
 	if road.GetSubcategory() != "primary" {
 		t.Errorf("expected primary subcategory, got %s", road.GetSubcategory())
 	}
+
 	if road.GetName() != "Main Street" {
 		t.Errorf("expected Main Street, got %s", road.GetName())
 	}

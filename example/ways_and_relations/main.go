@@ -26,26 +26,30 @@ func main() {
 
 	// Print ways
 	fmt.Printf("Found %d ways\n", len(result.Ways))
+
 	for _, way := range result.Ways {
-		name := way.Meta.Tags["name"]
+		name := way.Tags["name"]
 		if name == "" {
 			name = "Unnamed way"
 		}
-		fmt.Printf("\nWay: %s (ID: %d)\n", name, way.Meta.ID)
+
+		fmt.Printf("\nWay: %s (ID: %d)\n", name, way.ID)
 		fmt.Printf("  Number of nodes: %d\n", len(way.Nodes))
 
 		// Print some tags
-		if highway, ok := way.Meta.Tags["highway"]; ok {
+		if highway, ok := way.Tags["highway"]; ok {
 			fmt.Printf("  Highway type: %s\n", highway)
 		}
 
 		// If geometry is available, print first few coordinates
 		if way.Geometry != nil && len(way.Geometry) > 0 {
 			fmt.Printf("  Geometry (first 3 points):\n")
+
 			for i, point := range way.Geometry {
 				if i >= 3 {
 					break
 				}
+
 				fmt.Printf("    %.6f, %.6f\n", point.Lat, point.Lon)
 			}
 		}
@@ -53,15 +57,19 @@ func main() {
 		// Print referenced nodes
 		if len(way.Nodes) > 0 {
 			fmt.Printf("  Node IDs (first 5): ")
+
 			for i, node := range way.Nodes {
 				if i >= 5 {
 					break
 				}
+
 				if i > 0 {
 					fmt.Printf(", ")
 				}
-				fmt.Printf("%d", node.Meta.ID)
+
+				fmt.Printf("%d", node.ID)
 			}
+
 			fmt.Println()
 		}
 	}
@@ -76,6 +84,7 @@ func main() {
 	`
 
 	fmt.Println("\n--- Querying for relation ---")
+
 	relResult, err := client.Query(relationQuery)
 	if err != nil {
 		// This might fail if the relation doesn't exist, which is fine for an example
@@ -84,38 +93,43 @@ func main() {
 	}
 
 	fmt.Printf("Found %d relations\n", len(relResult.Relations))
+
 	for _, relation := range relResult.Relations {
-		name := relation.Meta.Tags["name"]
+		name := relation.Tags["name"]
 		if name == "" {
 			name = "Unnamed relation"
 		}
-		fmt.Printf("\nRelation: %s (ID: %d)\n", name, relation.Meta.ID)
-		fmt.Printf("  Type: %s\n", relation.Meta.Tags["type"])
+
+		fmt.Printf("\nRelation: %s (ID: %d)\n", name, relation.ID)
+		fmt.Printf("  Type: %s\n", relation.Tags["type"])
 		fmt.Printf("  Number of members: %d\n", len(relation.Members))
 
 		// Print first few members
 		if len(relation.Members) > 0 {
 			fmt.Printf("  Members (first 3):\n")
+
 			for i, member := range relation.Members {
 				if i >= 3 {
 					break
 				}
 				// Get the ID from the appropriate member type
 				var memberID int64
+
 				switch member.Type {
 				case overpass.ElementTypeNode:
 					if member.Node != nil {
-						memberID = member.Node.Meta.ID
+						memberID = member.Node.ID
 					}
 				case overpass.ElementTypeWay:
 					if member.Way != nil {
-						memberID = member.Way.Meta.ID
+						memberID = member.Way.ID
 					}
 				case overpass.ElementTypeRelation:
 					if member.Relation != nil {
-						memberID = member.Relation.Meta.ID
+						memberID = member.Relation.ID
 					}
 				}
+
 				fmt.Printf("    %s (role: %s, id: %d)\n",
 					member.Type, member.Role, memberID)
 			}

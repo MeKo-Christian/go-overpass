@@ -39,12 +39,14 @@ func main() {
 
 	// Print the results
 	fmt.Printf("Found %d cafes\n", len(result.Nodes))
+
 	for _, node := range result.Nodes {
-		name := node.Meta.Tags["name"]
+		name := node.Tags["name"]
 		if name == "" {
 			name = "Unnamed"
 		}
+
 		fmt.Printf("- %s (ID: %d) at %.6f, %.6f\n",
-			name, node.Meta.ID, node.Lat, node.Lon)
+			name, node.ID, node.Lat, node.Lon)
 	}
 }

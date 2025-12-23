@@ -96,7 +96,8 @@ func (e *ParseError) Error() string {
 	if e.Line > 0 {
 		return fmt.Sprintf("mapcss: line %d, col %d: %s", e.Line, e.Column, e.Message)
 	}
-	return fmt.Sprintf("mapcss: %s", e.Message)
+
+	return "mapcss: " + e.Message
 }
 
 // ParseMapCSS parses a MapCSS stylesheet string into a Stylesheet structure.
@@ -107,6 +108,7 @@ func ParseMapCSS(input string) (*Stylesheet, error) {
 		line:  1,
 		col:   1,
 	}
+
 	return p.parse()
 }
 
@@ -122,15 +124,18 @@ func (p *parser) parse() (*Stylesheet, error) {
 
 	for p.pos < len(p.input) {
 		p.skipWhitespaceAndComments()
+
 		if p.pos >= len(p.input) {
 			break
 		}
 
 		// Skip @import statements (not fully supported)
 		if p.peek() == '@' {
-			if err := p.skipAtRule(); err != nil {
+			err := p.skipAtRule()
+			if err != nil {
 				return nil, err
 			}
+
 			continue
 		}
 
@@ -138,6 +143,7 @@ func (p *parser) parse() (*Stylesheet, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if rule != nil {
 			rules = append(rules, *rule)
 		}
@@ -151,14 +157,17 @@ func (p *parser) parseRule() (*Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if len(selectors) == 0 {
 		return nil, nil
 	}
 
 	p.skipWhitespaceAndComments()
+
 	if p.pos >= len(p.input) || p.peek() != '{' {
 		return nil, p.error("expected '{'")
 	}
+
 	p.advance()
 
 	declarations, err := p.parseDeclarations()
@@ -167,9 +176,11 @@ func (p *parser) parseRule() (*Rule, error) {
 	}
 
 	p.skipWhitespaceAndComments()
+
 	if p.pos >= len(p.input) || p.peek() != '}' {
 		return nil, p.error("expected '}'")
 	}
+
 	p.advance()
 
 	return &Rule{
@@ -183,9 +194,11 @@ func (p *parser) parseSelectors() ([]Selector, error) {
 
 	for {
 		p.skipWhitespaceAndComments()
+
 		if p.pos >= len(p.input) {
 			break
 		}
+
 		if p.peek() == '{' {
 			break
 		}
@@ -194,15 +207,18 @@ func (p *parser) parseSelectors() ([]Selector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if sel != nil {
 			selectors = append(selectors, *sel)
 		}
 
 		p.skipWhitespaceAndComments()
+
 		if p.pos < len(p.input) && p.peek() == ',' {
 			p.advance()
 			continue
 		}
+
 		break
 	}
 
@@ -211,6 +227,7 @@ func (p *parser) parseSelectors() ([]Selector, error) {
 
 func (p *parser) parseSelector() (*Selector, error) {
 	p.skipWhitespaceAndComments()
+
 	if p.pos >= len(p.input) {
 		return nil, nil
 	}
@@ -222,9 +239,11 @@ func (p *parser) parseSelector() (*Selector, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if sel == nil {
 			break
 		}
+
 		selectors = append(selectors, sel)
 
 		p.skipWhitespaceAndComments()
@@ -239,6 +258,7 @@ func (p *parser) parseSelector() (*Selector, error) {
 				continue
 			}
 		}
+
 		break
 	}
 
@@ -257,6 +277,7 @@ func (p *parser) parseSelector() (*Selector, error) {
 
 func (p *parser) parseSingleSelector() (*Selector, error) {
 	p.skipWhitespaceAndComments()
+
 	if p.pos >= len(p.input) {
 		return nil, nil
 	}
@@ -271,6 +292,7 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 	// Parse type (node, way, relation, area, line, canvas, meta, *)
 	if ch == '*' {
 		sel.Type = "*"
+
 		p.advance()
 	} else if isLetter(ch) {
 		sel.Type = p.parseIdent()
@@ -288,8 +310,10 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 	// Parse zoom range (|z12 or |z1-11)
 	if p.pos < len(p.input) && p.peek() == '|' {
 		p.advance()
+
 		if p.pos < len(p.input) && p.peek() == 'z' {
 			p.advance()
+
 			zoomStr := p.parseNumber()
 			if strings.Contains(zoomStr, "-") {
 				parts := strings.SplitN(zoomStr, "-", 2)
@@ -306,6 +330,7 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 				// Check for range like |z12-
 				if p.pos < len(p.input) && p.peek() == '-' {
 					p.advance()
+
 					maxStr := p.parseNumber()
 					if maxStr != "" {
 						sel.ZoomMax, _ = strconv.Atoi(maxStr)
@@ -325,15 +350,18 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			sel.Conditions = append(sel.Conditions, *cond)
 		} else if ch == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':') {
 			p.advance()
+
 			pseudo := p.parseIdent()
 			if pseudo != "" {
 				sel.PseudoClasses = append(sel.PseudoClasses, pseudo)
 			}
 		} else if ch == '.' {
 			p.advance()
+
 			class := p.parseIdent()
 			if class != "" {
 				sel.Classes = append(sel.Classes, class)
@@ -354,6 +382,7 @@ func (p *parser) parseCondition() (*Condition, error) {
 	if p.peek() != '[' {
 		return nil, p.error("expected '['")
 	}
+
 	p.advance()
 
 	p.skipWhitespace()
@@ -363,6 +392,7 @@ func (p *parser) parseCondition() (*Condition, error) {
 	// Check for negation
 	if p.pos < len(p.input) && p.peek() == '!' {
 		p.advance()
+
 		cond.Operator = "!"
 	}
 
@@ -377,6 +407,7 @@ func (p *parser) parseCondition() (*Condition, error) {
 		op := p.parseOperator()
 		if op != "" {
 			cond.Operator = op
+
 			p.skipWhitespace()
 			cond.Value = p.parseValueString()
 
@@ -387,19 +418,23 @@ func (p *parser) parseCondition() (*Condition, error) {
 				if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
 					pattern = pattern[1 : len(pattern)-1]
 				}
+
 				re, err := regexp.Compile(pattern)
 				if err != nil {
 					return nil, p.error(fmt.Sprintf("invalid regex: %s", err))
 				}
+
 				cond.Regex = re
 			}
 		}
 	}
 
 	p.skipWhitespace()
+
 	if p.pos >= len(p.input) || p.peek() != ']' {
 		return nil, p.error("expected ']'")
 	}
+
 	p.advance()
 
 	return cond, nil
@@ -410,6 +445,7 @@ func (p *parser) parseDeclarations() ([]Declaration, error) {
 
 	for {
 		p.skipWhitespaceAndComments()
+
 		if p.pos >= len(p.input) || p.peek() == '}' {
 			break
 		}
@@ -418,6 +454,7 @@ func (p *parser) parseDeclarations() ([]Declaration, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if decl != nil {
 			decls = append(decls, *decl)
 		}
@@ -438,9 +475,11 @@ func (p *parser) parseDeclaration() (*Declaration, error) {
 			p.advance()
 			className := p.parseIdent()
 			p.skipWhitespace()
+
 			if p.pos < len(p.input) && p.peek() == ';' {
 				p.advance()
 			}
+
 			return &Declaration{
 				Property: "set-class",
 				Value:    Value{Raw: className, Type: ValueTypeString},
@@ -450,16 +489,21 @@ func (p *parser) parseDeclaration() (*Declaration, error) {
 		// set tag=value or set tag
 		tagName := p.parseIdent()
 		p.skipWhitespace()
+
 		value := "yes"
+
 		if p.pos < len(p.input) && p.peek() == '=' {
 			p.advance()
 			p.skipWhitespace()
 			value = p.parseValueString()
 		}
+
 		p.skipWhitespace()
+
 		if p.pos < len(p.input) && p.peek() == ';' {
 			p.advance()
 		}
+
 		return &Declaration{
 			Property: "set-tag:" + tagName,
 			Value:    Value{Raw: value, Type: ValueTypeString},
@@ -473,18 +517,22 @@ func (p *parser) parseDeclaration() (*Declaration, error) {
 	}
 
 	p.skipWhitespace()
+
 	if p.pos >= len(p.input) || p.peek() != ':' {
 		return nil, p.error("expected ':'")
 	}
+
 	p.advance()
 
 	p.skipWhitespace()
+
 	value, err := p.parseValue()
 	if err != nil {
 		return nil, err
 	}
 
 	p.skipWhitespace()
+
 	if p.pos < len(p.input) && p.peek() == ';' {
 		p.advance()
 	}
@@ -509,10 +557,13 @@ func (p *parser) parseValue() (*Value, error) {
 	if p.pos+4 < len(p.input) && p.input[p.pos:p.pos+4] == "url(" {
 		p.pos += 4
 		content := p.parseUntilClosingParen()
+
 		raw.WriteString("url(")
 		raw.WriteString(content)
 		raw.WriteString(")")
+
 		url := strings.Trim(content, `'"`)
+
 		return &Value{
 			Raw:  raw.String(),
 			Type: ValueTypeURL,
@@ -523,10 +574,13 @@ func (p *parser) parseValue() (*Value, error) {
 	if p.pos+5 < len(p.input) && p.input[p.pos:p.pos+5] == "eval(" {
 		p.pos += 5
 		content := p.parseUntilClosingParen()
+
 		raw.WriteString("eval(")
 		raw.WriteString(content)
 		raw.WriteString(")")
+
 		expr := strings.Trim(content, `'"`)
+
 		return &Value{
 			Raw:  raw.String(),
 			Type: ValueTypeEval,
@@ -553,6 +607,7 @@ func (p *parser) parseValue() (*Value, error) {
 		if ch == ';' || ch == '}' {
 			break
 		}
+
 		raw.WriteByte(ch)
 		p.advance()
 	}
@@ -572,14 +627,17 @@ func (p *parser) parseValue() (*Value, error) {
 		parts := strings.Split(rawStr, ",")
 		var dashes []float64
 		allNumeric := true
+
 		for _, part := range parts {
 			n, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
 			if err != nil {
 				allNumeric = false
 				break
 			}
+
 			dashes = append(dashes, n)
 		}
+
 		if allNumeric {
 			val.Type = ValueTypeDashes
 			val.Dashes = dashes
@@ -601,10 +659,12 @@ func (p *parser) parseValue() (*Value, error) {
 func (p *parser) parseRGBColor() (*Value, error) {
 	p.pos += 4 // skip "rgb("
 	content := p.parseUntilClosingParen()
+
 	parts := strings.Split(content, ",")
 	if len(parts) != 3 {
 		return nil, p.error("rgb() requires 3 values")
 	}
+
 	r, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
 	g, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
 	b, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
@@ -619,10 +679,12 @@ func (p *parser) parseRGBColor() (*Value, error) {
 func (p *parser) parseRGBAColor() (*Value, error) {
 	p.pos += 5 // skip "rgba("
 	content := p.parseUntilClosingParen()
+
 	parts := strings.Split(content, ",")
 	if len(parts) != 4 {
 		return nil, p.error("rgba() requires 4 values")
 	}
+
 	r, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
 	g, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
 	b, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
@@ -639,16 +701,19 @@ func (p *parser) parseHexColor() (*Value, error) {
 	if p.peek() != '#' {
 		return nil, p.error("expected '#'")
 	}
+
 	p.advance()
 
 	var hex strings.Builder
 	hex.WriteByte('#')
+
 	for p.pos < len(p.input) && isHexDigit(p.peek()) {
 		hex.WriteByte(p.peek())
 		p.advance()
 	}
 
 	hexStr := hex.String()
+
 	color, err := parseHexColorValue(hexStr)
 	if err != nil {
 		return nil, p.error(err.Error())
@@ -663,6 +728,7 @@ func (p *parser) parseHexColor() (*Value, error) {
 
 func (p *parser) parseUntilClosingParen() string {
 	var buf strings.Builder
+
 	depth := 1
 	for p.pos < len(p.input) && depth > 0 {
 		ch := p.peek()
@@ -675,14 +741,17 @@ func (p *parser) parseUntilClosingParen() string {
 				break
 			}
 		}
+
 		buf.WriteByte(ch)
 		p.advance()
 	}
+
 	return buf.String()
 }
 
 func (p *parser) parseIdent() string {
 	var buf strings.Builder
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if isIdent(ch) {
@@ -692,11 +761,13 @@ func (p *parser) parseIdent() string {
 			break
 		}
 	}
+
 	return buf.String()
 }
 
 func (p *parser) parseNumber() string {
 	var buf strings.Builder
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if isDigit(ch) || ch == '-' || ch == '.' {
@@ -706,11 +777,13 @@ func (p *parser) parseNumber() string {
 			break
 		}
 	}
+
 	return buf.String()
 }
 
 func (p *parser) parseKeyOrString() string {
 	p.skipWhitespace()
+
 	if p.pos >= len(p.input) {
 		return ""
 	}
@@ -719,6 +792,7 @@ func (p *parser) parseKeyOrString() string {
 	if ch == '"' || ch == '\'' {
 		return p.parseQuotedString()
 	}
+
 	return p.parseIdent()
 }
 
@@ -731,9 +805,11 @@ func (p *parser) parseQuotedString() string {
 	if quote != '"' && quote != '\'' {
 		return p.parseIdent()
 	}
+
 	p.advance()
 
 	var buf strings.Builder
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if ch == '\\' && p.pos+1 < len(p.input) {
@@ -748,11 +824,13 @@ func (p *parser) parseQuotedString() string {
 			p.advance()
 		}
 	}
+
 	return buf.String()
 }
 
 func (p *parser) parseValueString() string {
 	p.skipWhitespace()
+
 	if p.pos >= len(p.input) {
 		return ""
 	}
@@ -768,14 +846,17 @@ func (p *parser) parseValueString() string {
 	}
 
 	var buf strings.Builder
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if ch == ']' || ch == ';' || ch == '}' || isWhitespace(ch) {
 			break
 		}
+
 		buf.WriteByte(ch)
 		p.advance()
 	}
+
 	return buf.String()
 }
 
@@ -783,10 +864,12 @@ func (p *parser) parseRegex() string {
 	if p.peek() != '/' {
 		return ""
 	}
+
 	p.advance()
 
 	var buf strings.Builder
 	buf.WriteByte('/')
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if ch == '\\' && p.pos+1 < len(p.input) {
@@ -797,12 +880,14 @@ func (p *parser) parseRegex() string {
 		} else if ch == '/' {
 			buf.WriteByte(ch)
 			p.advance()
+
 			break
 		} else {
 			buf.WriteByte(ch)
 			p.advance()
 		}
 	}
+
 	return buf.String()
 }
 
@@ -853,8 +938,10 @@ func (p *parser) skipWhitespaceAndComments() {
 					p.pos += 2
 					break
 				}
+
 				p.advance()
 			}
+
 			continue
 		}
 		// Line comment
@@ -862,8 +949,10 @@ func (p *parser) skipWhitespaceAndComments() {
 			for p.pos < len(p.input) && p.peek() != '\n' {
 				p.advance()
 			}
+
 			continue
 		}
+
 		break
 	}
 }
@@ -873,10 +962,12 @@ func (p *parser) skipAtRule() error {
 	for p.pos < len(p.input) && p.peek() != ';' && p.peek() != '{' {
 		p.advance()
 	}
+
 	if p.pos < len(p.input) {
 		if p.peek() == '{' {
 			// Skip block
 			p.advance()
+
 			depth := 1
 			for p.pos < len(p.input) && depth > 0 {
 				if p.peek() == '{' {
@@ -884,12 +975,14 @@ func (p *parser) skipAtRule() error {
 				} else if p.peek() == '}' {
 					depth--
 				}
+
 				p.advance()
 			}
 		} else {
 			p.advance() // skip ;
 		}
 	}
+
 	return nil
 }
 
@@ -897,6 +990,7 @@ func (p *parser) peek() byte {
 	if p.pos >= len(p.input) {
 		return 0
 	}
+
 	return p.input[p.pos]
 }
 
@@ -908,6 +1002,7 @@ func (p *parser) advance() {
 		} else {
 			p.col++
 		}
+
 		p.pos++
 	}
 }
@@ -983,10 +1078,11 @@ func hexVal(ch byte) int {
 	case ch >= 'A' && ch <= 'F':
 		return int(ch-'A') + 10
 	}
+
 	return 0
 }
 
-// Named CSS colors supported by MapCSS
+// Named CSS colors supported by MapCSS.
 var namedColors = map[string]*Color{
 	"black":   {0, 0, 0, 1},
 	"white":   {1, 1, 1, 1},
@@ -1016,6 +1112,7 @@ func parseNamedColor(name string) *Color {
 	if c, ok := namedColors[strings.ToLower(name)]; ok {
 		return c
 	}
+
 	return nil
 }
 
@@ -1024,6 +1121,7 @@ func (c *Color) String() string {
 	if c.A == 1.0 {
 		return fmt.Sprintf("rgb(%.3f, %.3f, %.3f)", c.R, c.G, c.B)
 	}
+
 	return fmt.Sprintf("rgba(%.3f, %.3f, %.3f, %.3f)", c.R, c.G, c.B, c.A)
 }
 
@@ -1031,10 +1129,13 @@ func (c *Color) String() string {
 func (c *Color) Hex() string {
 	r := int(c.R * 255)
 	g := int(c.G * 255)
+
 	b := int(c.B * 255)
 	if c.A == 1.0 {
 		return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 	}
+
 	a := int(c.A * 255)
+
 	return fmt.Sprintf("#%02x%02x%02x%02x", r, g, b, a)
 }

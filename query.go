@@ -47,18 +47,21 @@ type overpassResponseElement struct {
 	Tags map[string]string `json:"tags"`
 }
 
-// httpPost sends HTTP POST request with context support
+// httpPost sends HTTP POST request with context support.
 func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 	<-c.semaphore
+
 	defer func() { c.semaphore <- struct{}{} }()
 
 	// Create POST request with context
 	data := url.Values{"data": []string{query}}
-	req, err := http.NewRequestWithContext(ctx, "POST", c.apiEndpoint,
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiEndpoint,
 		strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("http error: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// Use Do instead of PostForm to support context
@@ -66,8 +69,10 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("http error: %w", err)
 	}
+
 	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && err == nil {
+		closeErr := resp.Body.Close()
+		if closeErr != nil && err == nil {
 			err = fmt.Errorf("http error: %w", closeErr)
 		}
 	}()
@@ -77,7 +82,7 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 		return nil, fmt.Errorf("http error: %w", err)
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("overpass engine error: %w", &ServerError{resp.StatusCode, body})
 	}
 
@@ -86,7 +91,8 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 
 func unmarshal(body []byte) (Result, error) {
 	var overpassRes overpassResponse
-	if err := json.Unmarshal(body, &overpassRes); err != nil {
+	err := json.Unmarshal(body, &overpassRes)
+	if err != nil {
 		return Result{}, fmt.Errorf("overpass engine error: %w", err)
 	}
 
@@ -118,6 +124,7 @@ func unmarshal(body []byte) (Result, error) {
 			}
 		case ElementTypeWay:
 			way := result.getWay(el.ID)
+
 			*way = Way{
 				Meta:     meta,
 				Nodes:    make([]*Node, len(el.Nodes)),
@@ -126,6 +133,7 @@ func unmarshal(body []byte) (Result, error) {
 			for idx, nodeID := range el.Nodes {
 				way.Nodes[idx] = result.getNode(nodeID)
 			}
+
 			if el.Bounds != nil {
 				way.Bounds = &Box{
 					Min: Point{
@@ -138,12 +146,14 @@ func unmarshal(body []byte) (Result, error) {
 					},
 				}
 			}
+
 			for idx, geo := range el.Geometry {
 				way.Geometry[idx].Lat = geo.Lat
 				way.Geometry[idx].Lon = geo.Lon
 			}
 		case ElementTypeRelation:
 			relation := result.getRelation(el.ID)
+
 			*relation = Relation{
 				Meta:    meta,
 				Members: make([]RelationMember, len(el.Members)),
@@ -161,8 +171,10 @@ func unmarshal(body []byte) (Result, error) {
 				case ElementTypeRelation:
 					relationMember.Relation = result.getRelation(member.Ref)
 				}
+
 				relation.Members[idx] = relationMember
 			}
+
 			if el.Bounds != nil {
 				relation.Bounds = &Box{
 					Min: Point{

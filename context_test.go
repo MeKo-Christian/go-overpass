@@ -11,12 +11,13 @@ import (
 func TestQueryContext_Success(t *testing.T) {
 	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[{"type":"node","id":1,"lat":1.0,"lon":2.0}]}`),
 		},
 	})
 
 	ctx := context.Background()
+
 	result, err := client.QueryContext(ctx, `[out:json];node(1);out;`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -80,7 +81,7 @@ func TestQueryContext_Timeout(t *testing.T) {
 func TestQueryContext_Background(t *testing.T) {
 	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
 		},
 	})
@@ -99,7 +100,7 @@ func TestQueryContext_Background(t *testing.T) {
 func TestQuery_UsesBackgroundContext(t *testing.T) {
 	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
 		},
 	})
@@ -127,7 +128,7 @@ func TestPackageLevelQueryContext(t *testing.T) {
 	// Replace with mock
 	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
 		},
 	})
@@ -138,6 +139,7 @@ func TestPackageLevelQueryContext(t *testing.T) {
 	}()
 
 	ctx := context.Background()
+
 	result, err := QueryContext(ctx, `[out:json];node(1);out;`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -155,7 +157,7 @@ func TestPackageLevelQuery(t *testing.T) {
 	// Replace with mock
 	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
 		},
 	})
@@ -175,7 +177,7 @@ func TestPackageLevelQuery(t *testing.T) {
 	}
 }
 
-// mockCancellableHttpClient simulates HTTP client that respects context cancellation
+// mockCancellableHttpClient simulates HTTP client that respects context cancellation.
 type mockCancellableHttpClient struct {
 	delay time.Duration
 }
@@ -196,7 +198,7 @@ func (m *mockCancellableHttpClient) Do(req *http.Request) (*http.Response, error
 	case <-timer.C:
 		// Completed successfully
 		return &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
 		}, nil
 	case <-req.Context().Done():

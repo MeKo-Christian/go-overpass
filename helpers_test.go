@@ -192,9 +192,11 @@ func TestResult_GetMultiple(t *testing.T) {
 	if len(result.Nodes) != 1 {
 		t.Error("expected 1 node")
 	}
+
 	if len(result.Ways) != 1 {
 		t.Error("expected 1 way")
 	}
+
 	if len(result.Relations) != 1 {
 		t.Error("expected 1 relation")
 	}

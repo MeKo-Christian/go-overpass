@@ -88,6 +88,7 @@ func TestClientRateLimiting(t *testing.T) {
 	for i := 0; i < numRequests; i++ {
 		go func() {
 			defer wg.Done()
+
 			_, _ = client.Query(`[out:json];node(1);out;`)
 		}()
 	}
@@ -120,6 +121,7 @@ func TestClientConcurrency(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
 			defer wg.Done()
+
 			for j := 0; j < 5; j++ {
 				_, err := client.Query(`[out:json];node(1);out;`)
 				if err != nil {
@@ -138,7 +140,7 @@ func TestClientConcurrency(t *testing.T) {
 	}
 }
 
-// mockSlowHttpClient simulates slow HTTP responses for rate limiting tests
+// mockSlowHttpClient simulates slow HTTP responses for rate limiting tests.
 type mockSlowHttpClient struct {
 	delay      time.Duration
 	onRequest  func()
@@ -157,18 +159,18 @@ func (m *mockSlowHttpClient) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       newTestBody(`{"elements":[]}`),
 	}, nil
 }
 
-// mockConcurrentHttpClient creates fresh response bodies for each request (concurrency-safe)
+// mockConcurrentHttpClient creates fresh response bodies for each request (concurrency-safe).
 type mockConcurrentHttpClient struct{}
 
 func (m *mockConcurrentHttpClient) Do(req *http.Request) (*http.Response, error) {
 	// Create a fresh body for each request to avoid shared state issues
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       newTestBody(`{"elements":[]}`),
 	}, nil
 }

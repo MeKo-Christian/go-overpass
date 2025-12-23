@@ -26,6 +26,7 @@ type Meta struct {
 // Node represents OSM node type.
 type Node struct {
 	Meta
+
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
 }
@@ -33,6 +34,7 @@ type Node struct {
 // Way represents OSM way type.
 type Way struct {
 	Meta
+
 	Nodes    []*Node `json:"nodes,omitempty"`
 	Bounds   *Box    `json:"bounds,omitempty"`
 	Geometry []Point `json:"geometry,omitempty"`
@@ -46,6 +48,7 @@ type Point struct {
 // Relation represents OSM relation type.
 type Relation struct {
 	Meta
+
 	Members []RelationMember `json:"members,omitempty"`
 	Bounds  *Box             `json:"bounds,omitempty"`
 }

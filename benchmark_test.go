@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// BenchmarkUnmarshal benchmarks JSON parsing performance
+// BenchmarkUnmarshal benchmarks JSON parsing performance.
 func BenchmarkUnmarshal(b *testing.B) {
 	// Complex JSON with nodes, ways, and relations
 	jsonData := []byte(`{
@@ -21,6 +21,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 	}`)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := unmarshal(jsonData)
 		if err != nil {
@@ -29,16 +30,17 @@ func BenchmarkUnmarshal(b *testing.B) {
 	}
 }
 
-// BenchmarkQuery benchmarks full query cycle with mock
+// BenchmarkQuery benchmarks full query cycle with mock.
 func BenchmarkQuery(b *testing.B) {
 	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
 		res: &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[{"type":"node","id":1,"lat":1.0,"lon":2.0}]}`),
 		},
 	})
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		// Note: This will fail after first iteration due to body being consumed
 		// In real benchmark, mockHttpClient would need to create fresh bodies
@@ -46,12 +48,13 @@ func BenchmarkQuery(b *testing.B) {
 	}
 }
 
-// BenchmarkQueryContext benchmarks context-aware query
+// BenchmarkQueryContext benchmarks context-aware query.
 func BenchmarkQueryContext(b *testing.B) {
 	client := NewWithSettings(apiEndpoint, 1, &mockConcurrentHttpClient{})
 	ctx := context.Background()
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := client.QueryContext(ctx, `[out:json];node(1);out;`)
 		if err != nil {
@@ -60,7 +63,7 @@ func BenchmarkQueryContext(b *testing.B) {
 	}
 }
 
-// BenchmarkConcurrentQueries benchmarks parallel request handling
+// BenchmarkConcurrentQueries benchmarks parallel request handling.
 func BenchmarkConcurrentQueries(b *testing.B) {
 	client := NewWithSettings(apiEndpoint, 5, &mockConcurrentHttpClient{})
 
@@ -76,29 +79,32 @@ func BenchmarkConcurrentQueries(b *testing.B) {
 	})
 }
 
-// BenchmarkClientCreation benchmarks client initialization
+// BenchmarkClientCreation benchmarks client initialization.
 func BenchmarkClientCreation(b *testing.B) {
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = New()
 	}
 }
 
-// BenchmarkClientCreationWithSettings benchmarks custom client initialization
+// BenchmarkClientCreationWithSettings benchmarks custom client initialization.
 func BenchmarkClientCreationWithSettings(b *testing.B) {
 	mockClient := &mockHttpClient{}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = NewWithSettings(apiEndpoint, 3, mockClient)
 	}
 }
 
-// BenchmarkUnmarshal_SimpleNode benchmarks simple node parsing
+// BenchmarkUnmarshal_SimpleNode benchmarks simple node parsing.
 func BenchmarkUnmarshal_SimpleNode(b *testing.B) {
 	jsonData := []byte(`{"elements":[{"type":"node","id":1,"lat":1.0,"lon":2.0}]}`)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := unmarshal(jsonData)
 		if err != nil {
@@ -107,7 +113,7 @@ func BenchmarkUnmarshal_SimpleNode(b *testing.B) {
 	}
 }
 
-// BenchmarkUnmarshal_ComplexWay benchmarks way with geometry
+// BenchmarkUnmarshal_ComplexWay benchmarks way with geometry.
 func BenchmarkUnmarshal_ComplexWay(b *testing.B) {
 	jsonData := []byte(`{
 		"elements":[{
@@ -126,6 +132,7 @@ func BenchmarkUnmarshal_ComplexWay(b *testing.B) {
 	}`)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := unmarshal(jsonData)
 		if err != nil {
@@ -134,20 +141,24 @@ func BenchmarkUnmarshal_ComplexWay(b *testing.B) {
 	}
 }
 
-// BenchmarkUnmarshal_LargeResult benchmarks large result sets
+// BenchmarkUnmarshal_LargeResult benchmarks large result sets.
 func BenchmarkUnmarshal_LargeResult(b *testing.B) {
 	// Generate JSON with 100 nodes
 	json := `{"elements":[`
+
 	for i := 0; i < 100; i++ {
 		if i > 0 {
 			json += `,`
 		}
+
 		json += `{"type":"node","id":` + string(rune(i+1)) + `,"lat":1.0,"lon":2.0}`
 	}
+
 	json += `]}`
 	jsonData := []byte(json)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := unmarshal(jsonData)
 		if err != nil {

@@ -55,6 +55,7 @@ func NewWithSettings(
 	}
 
 	c.cache.startCleanupRoutine(ctx)
+
 	return c
 }
 
@@ -67,6 +68,7 @@ func NewWithRetry(
 ) Client {
 	c := NewWithSettings(apiEndpoint, maxParallel, httpClient)
 	c.retryConfig = retryConfig
+
 	return c
 }
 
@@ -142,14 +144,14 @@ func (c *Client) Query(query string) (Result, error) {
 	return c.QueryContext(context.Background(), query)
 }
 
-// QueryWithBuilder executes query from builder (convenience method)
+// QueryWithBuilder executes query from builder (convenience method).
 func (c *Client) QueryWithBuilder(ctx context.Context, builder *QueryBuilder) (Result, error) {
 	return c.QueryContext(ctx, builder.Build())
 }
 
 var DefaultClient = New()
 
-// QueryWithBuilder executes query from builder using DefaultClient
+// QueryWithBuilder executes query from builder using DefaultClient.
 func QueryWithBuilder(ctx context.Context, builder *QueryBuilder) (Result, error) {
 	return DefaultClient.QueryWithBuilder(ctx, builder)
 }
