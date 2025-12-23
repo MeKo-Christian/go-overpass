@@ -64,11 +64,31 @@ node(1);out;`
 	if res.Style == "" || res.Data == nil {
 		t.Fatalf("expected style and data to be extracted")
 	}
+	if len(res.Styles) != 1 {
+		t.Fatalf("expected 1 style, got %d", len(res.Styles))
+	}
+	if res.DataServer != "https://overpass-api.de/api/" {
+		t.Fatalf("expected data server to be captured, got %q", res.DataServer)
+	}
 	if res.EndpointOverride != "https://overpass-api.de/api/interpreter" {
 		t.Fatalf("expected endpoint override to be captured, got %q", res.EndpointOverride)
 	}
 	if strings.Contains(res.Query, "style:") || strings.Contains(res.Query, "data:") {
 		t.Fatalf("style/data macros should be removed: %s", res.Query)
+	}
+}
+
+func TestMultipleStyles(t *testing.T) {
+	query := `{{style:a}}node(1);out;{{style:b}}`
+	res, err := Expand(query, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Style != "b" {
+		t.Fatalf("expected last style in Style, got %q", res.Style)
+	}
+	if len(res.Styles) != 2 {
+		t.Fatalf("expected 2 styles, got %d", len(res.Styles))
 	}
 }
 
@@ -82,6 +102,24 @@ func TestApplyEndpointOverride(t *testing.T) {
 	endpoint = ApplyEndpointOverride("https://default/api/interpreter", Result{})
 	if endpoint != "https://default/api/interpreter" {
 		t.Fatalf("unexpected fallback endpoint: %s", endpoint)
+	}
+}
+
+func TestSQLDataSource(t *testing.T) {
+	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc}}
+node(1);out;`
+	res, err := Expand(query, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Data == nil || res.Data.Mode != "sql" {
+		t.Fatalf("expected sql data mode")
+	}
+	if res.DataServer != "https://postpass.example/api/0.2/" {
+		t.Fatalf("expected data server to be captured, got %q", res.DataServer)
+	}
+	if res.EndpointOverride != "" {
+		t.Fatalf("did not expect endpoint override for sql mode")
 	}
 }
 
@@ -139,5 +177,46 @@ func TestGeocodeMacros(t *testing.T) {
 	}
 	if !strings.Contains(res.Query, "5,6") {
 		t.Fatalf("geocodeCoords not expanded: %s", res.Query)
+	}
+}
+
+func TestXMLMacroExpansion(t *testing.T) {
+	query := `<osm-script><query {{bbox}}/><center {{center}}/></osm-script>`
+	res, err := Expand(query, Options{
+		BBox:   &BBox{South: 1, West: 2, North: 3, East: 4},
+		Center: &Center{Lat: 5, Lon: 6},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(res.Query, `s="1" w="2" n="3" e="4"`) {
+		t.Fatalf("xml bbox not expanded: %s", res.Query)
+	}
+	if !strings.Contains(res.Query, `lat="5" lon="6"`) {
+		t.Fatalf("xml center not expanded: %s", res.Query)
+	}
+}
+
+func TestXMLGeocodeExpansion(t *testing.T) {
+	geocoder := fakeGeocoder{
+		result: GeocodeResult{
+			OSMType: "relation",
+			OSMID:   1645,
+		},
+	}
+	query := `<osm-script><query {{geocodeId:Vienna}} {{geocodeArea:Vienna}}/></osm-script>`
+	res, err := Expand(query, Options{
+		Geocoder: geocoder,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(res.Query, `type="relation" ref="1645"`) {
+		t.Fatalf("xml geocodeId not expanded: %s", res.Query)
+	}
+	if !strings.Contains(res.Query, `type="area" ref="3600001645"`) {
+		t.Fatalf("xml geocodeArea not expanded: %s", res.Query)
 	}
 }

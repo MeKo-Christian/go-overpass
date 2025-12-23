@@ -152,6 +152,16 @@ override (falling back to your default endpoint when absent).
 Geocoding macros like `{{geocodeArea:...}}` are supported when you provide a
 `turbo.Geocoder` implementation in `turbo.Options`.
 
+Macro expansion auto-detects XML queries (e.g., `<osm-script>`) and will emit
+XML-style replacements for `{{bbox}}`, `{{center}}`, and geocode macros. You can
+force a format via `Options.Format`.
+
+`{{data:sql,server=...}}` is parsed and exposed via `Result.Data` and
+`Result.DataServer` for Postpass-style backends.
+
+When multiple `{{style:...}}` blocks are present, the latest one is stored in
+`Result.Style`, and all of them are collected in `Result.Styles`.
+
 ### Working with Results
 
 ```go

@@ -36,16 +36,29 @@ type Options struct {
 	Now       time.Time
 	Shortcuts map[string]string
 	Geocoder  Geocoder
+	Format    QueryFormat
 }
 
 // Result holds the expanded query and any extracted metadata.
 type Result struct {
 	Query string
 	Style string
+	Styles []string
 	Data  *DataSource
 	// EndpointOverride suggests an Overpass API endpoint derived from {{data:overpass,server=...}}.
 	EndpointOverride string
+	// DataServer suggests the backend server from {{data:...,server=...}} (overpass or sql).
+	DataServer string
 }
+
+// QueryFormat controls how macros are expanded.
+type QueryFormat int
+
+const (
+	FormatAuto QueryFormat = iota
+	FormatQL
+	FormatXML
+)
 
 var (
 	ErrMissingBBox     = errors.New("turbo: bbox not provided")
@@ -65,6 +78,7 @@ var (
 //
 // Unsupported geocode macros return an error for now.
 func Expand(query string, opts Options) (Result, error) {
+	format := detectFormat(query, opts.Format)
 	shortcuts := map[string]string{}
 	for k, v := range opts.Shortcuts {
 		shortcuts[k] = v
@@ -93,7 +107,11 @@ func Expand(query string, opts Options) (Result, error) {
 		}
 
 		if strings.HasPrefix(content, "style:") {
-			res.Style = strings.TrimSpace(strings.TrimPrefix(content, "style:"))
+			style := strings.TrimSpace(strings.TrimPrefix(content, "style:"))
+			res.Style = style
+			if style != "" {
+				res.Styles = append(res.Styles, style)
+			}
 			return "", nil
 		}
 
@@ -103,6 +121,9 @@ func Expand(query string, opts Options) (Result, error) {
 				return "", err
 			}
 			res.Data = ds
+			if server, ok := ds.Options["server"]; ok {
+				res.DataServer = server
+			}
 			if strings.EqualFold(ds.Mode, "overpass") {
 				if server, ok := ds.Options["server"]; ok {
 					res.EndpointOverride = normalizeEndpoint(server)
@@ -112,21 +133,21 @@ func Expand(query string, opts Options) (Result, error) {
 		}
 
 		if strings.HasPrefix(content, "geocode") {
-			return expandGeocode(content, opts)
+			return expandGeocode(content, opts, format)
 		}
 
 		if content == "bbox" {
 			if opts.BBox == nil {
 				return "", ErrMissingBBox
 			}
-			return formatBBox(*opts.BBox), nil
+			return formatBBox(*opts.BBox, format), nil
 		}
 
 		if content == "center" {
 			if opts.Center == nil {
 				return "", ErrMissingCenter
 			}
-			return formatCenter(*opts.Center), nil
+			return formatCenter(*opts.Center, format), nil
 		}
 
 		if strings.HasPrefix(content, "date") {
@@ -183,20 +204,48 @@ func normalizeEndpoint(raw string) string {
 	return trimmed
 }
 
-func formatBBox(b BBox) string {
-	return fmt.Sprintf("%s,%s,%s,%s",
-		formatFloat(b.South),
-		formatFloat(b.West),
-		formatFloat(b.North),
-		formatFloat(b.East),
-	)
+func detectFormat(query string, format QueryFormat) QueryFormat {
+	if format != FormatAuto {
+		return format
+	}
+	if strings.Contains(query, "<osm-script") || strings.Contains(query, "<query") {
+		return FormatXML
+	}
+	return FormatQL
 }
 
-func formatCenter(c Center) string {
-	return fmt.Sprintf("%s,%s",
-		formatFloat(c.Lat),
-		formatFloat(c.Lon),
-	)
+func formatBBox(b BBox, format QueryFormat) string {
+	switch format {
+	case FormatXML:
+		return fmt.Sprintf(`s="%s" w="%s" n="%s" e="%s"`,
+			formatFloat(b.South),
+			formatFloat(b.West),
+			formatFloat(b.North),
+			formatFloat(b.East),
+		)
+	default:
+		return fmt.Sprintf("%s,%s,%s,%s",
+			formatFloat(b.South),
+			formatFloat(b.West),
+			formatFloat(b.North),
+			formatFloat(b.East),
+		)
+	}
+}
+
+func formatCenter(c Center, format QueryFormat) string {
+	switch format {
+	case FormatXML:
+		return fmt.Sprintf(`lat="%s" lon="%s"`,
+			formatFloat(c.Lat),
+			formatFloat(c.Lon),
+		)
+	default:
+		return fmt.Sprintf("%s,%s",
+			formatFloat(c.Lat),
+			formatFloat(c.Lon),
+		)
+	}
 }
 
 func formatFloat(v float64) string {

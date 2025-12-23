@@ -20,7 +20,7 @@ type GeocodeResult struct {
 	Center  *Center
 }
 
-func expandGeocode(content string, opts Options) (string, error) {
+func expandGeocode(content string, opts Options, format QueryFormat) (string, error) {
 	if opts.Geocoder == nil {
 		return "", ErrMissingGeocoder
 	}
@@ -41,6 +41,9 @@ func expandGeocode(content string, opts Options) (string, error) {
 		if !ok || result.OSMID <= 0 {
 			return "", ErrGeocodeData
 		}
+		if format == FormatXML {
+			return fmt.Sprintf(`type="%s" ref="%d"`, t, result.OSMID), nil
+		}
 		return fmt.Sprintf("%s(%d)", t, result.OSMID), nil
 	case "geocodeArea":
 		areaID := result.AreaID
@@ -51,17 +54,20 @@ func expandGeocode(content string, opts Options) (string, error) {
 				return "", err
 			}
 		}
+		if format == FormatXML {
+			return fmt.Sprintf(`type="area" ref="%d"`, areaID), nil
+		}
 		return fmt.Sprintf("area(%d)", areaID), nil
 	case "geocodeBbox":
 		if result.BBox == nil {
 			return "", ErrGeocodeData
 		}
-		return formatBBox(*result.BBox), nil
+		return formatBBox(*result.BBox, format), nil
 	case "geocodeCoords":
 		if result.Center == nil {
 			return "", ErrGeocodeData
 		}
-		return formatCenter(*result.Center), nil
+		return formatCenter(*result.Center, format), nil
 	default:
 		return "", ErrBadMacro
 	}
