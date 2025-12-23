@@ -244,6 +244,7 @@ func TestGeocodeMacros(t *testing.T) {
 	}
 
 	query := "{{geocodeId:Vienna}};{{geocodeArea:Vienna}};{{geocodeBbox:Vienna}};{{geocodeCoords:Vienna}}"
+
 	res, err := Expand(query, Options{
 		Geocoder: geocoder,
 	})

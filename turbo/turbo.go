@@ -262,36 +262,36 @@ func detectFormat(query string, format QueryFormat) QueryFormat {
 	return FormatQL
 }
 
-func formatBBox(b BBox, format QueryFormat) string {
+func formatBBox(bbox BBox, format QueryFormat) string {
 	switch format {
 	case FormatXML:
 		return fmt.Sprintf(`s="%s" w="%s" n="%s" e="%s"`,
-			formatFloat(b.South),
-			formatFloat(b.West),
-			formatFloat(b.North),
-			formatFloat(b.East),
+			formatFloat(bbox.South),
+			formatFloat(bbox.West),
+			formatFloat(bbox.North),
+			formatFloat(bbox.East),
 		)
 	default:
 		return fmt.Sprintf("%s,%s,%s,%s",
-			formatFloat(b.South),
-			formatFloat(b.West),
-			formatFloat(b.North),
-			formatFloat(b.East),
+			formatFloat(bbox.South),
+			formatFloat(bbox.West),
+			formatFloat(bbox.North),
+			formatFloat(bbox.East),
 		)
 	}
 }
 
-func formatCenter(c Center, format QueryFormat) string {
+func formatCenter(center Center, format QueryFormat) string {
 	switch format {
 	case FormatXML:
 		return fmt.Sprintf(`lat="%s" lon="%s"`,
-			formatFloat(c.Lat),
-			formatFloat(c.Lon),
+			formatFloat(center.Lat),
+			formatFloat(center.Lon),
 		)
 	default:
 		return fmt.Sprintf("%s,%s",
-			formatFloat(c.Lat),
-			formatFloat(c.Lon),
+			formatFloat(center.Lat),
+			formatFloat(center.Lon),
 		)
 	}
 }
@@ -451,7 +451,7 @@ func parseRelativeDuration(raw string) (int, string, error) {
 	}
 }
 
-func scanMacros(query string, fn func(start int, end int, content string) error) error {
+func scanMacros(query string, callback func(start int, end int, content string) error) error {
 	for pos := 0; pos < len(query); {
 		openIdx := strings.Index(query[pos:], "{{")
 		if openIdx == -1 {
@@ -469,7 +469,7 @@ func scanMacros(query string, fn func(start int, end int, content string) error)
 
 		content := query[openIdx+2 : closeIdx]
 
-		err := fn(openIdx, closeIdx+2, content)
+		err := callback(openIdx, closeIdx+2, content)
 		if err != nil {
 			return err
 		}

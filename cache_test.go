@@ -205,12 +205,12 @@ func TestCacheCleanup(t *testing.T) {
 		TTL:        50 * time.Millisecond,
 		MaxEntries: 100,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
-	c.set("e", "q1", Result{Count: 1})
-	c.set("e", "q2", Result{Count: 2})
+	cache.set("e", "q1", Result{Count: 1})
+	cache.set("e", "q2", Result{Count: 2})
 
-	if size := c.size(); size != 2 {
+	if size := cache.size(); size != 2 {
 		t.Errorf("expected size=2, got %d", size)
 	}
 
@@ -218,9 +218,9 @@ func TestCacheCleanup(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Manual cleanup
-	c.cleanup()
+	cache.cleanup()
 
-	if size := c.size(); size != 0 {
+	if size := cache.size(); size != 0 {
 		t.Errorf("expected size=0 after cleanup, got %d", size)
 	}
 }
