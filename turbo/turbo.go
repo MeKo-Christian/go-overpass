@@ -27,6 +27,13 @@ type Center struct {
 type DataSource struct {
 	Mode    string
 	Options map[string]string
+	Parsed  DataOptions
+}
+
+// DataOptions exposes typed access to common {{data:...}} parameters.
+type DataOptions struct {
+	Server string
+	Params map[string]string
 }
 
 // Options control macro expansion.
@@ -281,6 +288,7 @@ func parseDataSource(raw string) (*DataSource, error) {
 	}
 
 	options := map[string]string{}
+	parsed := DataOptions{}
 	for _, part := range parts[1:] {
 		part = strings.TrimSpace(part)
 		if part == "" {
@@ -294,12 +302,22 @@ func parseDataSource(raw string) (*DataSource, error) {
 		if key == "" {
 			return nil, ErrBadMacro
 		}
-		options[key] = strings.TrimSpace(kv[1])
+		value := strings.TrimSpace(kv[1])
+		options[key] = value
+		if key == "server" {
+			parsed.Server = value
+		} else {
+			if parsed.Params == nil {
+				parsed.Params = map[string]string{}
+			}
+			parsed.Params[key] = value
+		}
 	}
 
 	return &DataSource{
 		Mode:    mode,
 		Options: options,
+		Parsed:  parsed,
 	}, nil
 }
 

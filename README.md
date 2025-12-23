@@ -157,7 +157,11 @@ XML-style replacements for `{{bbox}}`, `{{center}}`, and geocode macros. You can
 force a format via `Options.Format`.
 
 `{{data:sql,server=...}}` is parsed and exposed via `Result.Data` and
-`Result.DataServer` for Postpass-style backends.
+`Result.DataServer` for Postpass-style backends. Use
+`turbo.SQLDataConfigFromResult` to extract server and params.
+
+All `{{data:...}}` options are also available in typed form via
+`Result.Data.Parsed` (server and parameter map).
 
 When multiple `{{style:...}}` blocks are present, the latest one is stored in
 `Result.Style`, and all of them are collected in `Result.Styles`.

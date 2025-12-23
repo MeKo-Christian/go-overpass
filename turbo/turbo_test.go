@@ -73,6 +73,9 @@ node(1);out;`
 	if res.EndpointOverride != "https://overpass-api.de/api/interpreter" {
 		t.Fatalf("expected endpoint override to be captured, got %q", res.EndpointOverride)
 	}
+	if res.Data.Parsed.Server != "https://overpass-api.de/api/" {
+		t.Fatalf("expected parsed server to be captured, got %q", res.Data.Parsed.Server)
+	}
 	if strings.Contains(res.Query, "style:") || strings.Contains(res.Query, "data:") {
 		t.Fatalf("style/data macros should be removed: %s", res.Query)
 	}
@@ -118,8 +121,37 @@ node(1);out;`
 	if res.DataServer != "https://postpass.example/api/0.2/" {
 		t.Fatalf("expected data server to be captured, got %q", res.DataServer)
 	}
+	if res.Data.Parsed.Server != "https://postpass.example/api/0.2/" {
+		t.Fatalf("expected parsed server to be captured, got %q", res.Data.Parsed.Server)
+	}
+	if res.Data.Parsed.Params["token"] != "abc" {
+		t.Fatalf("expected parsed token param, got %q", res.Data.Parsed.Params["token"])
+	}
 	if res.EndpointOverride != "" {
 		t.Fatalf("did not expect endpoint override for sql mode")
+	}
+}
+
+func TestSQLDataConfigFromResult(t *testing.T) {
+	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc,foo=bar}}
+node(1);out;`
+	res, err := Expand(query, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	cfg := SQLDataConfigFromResult(res)
+	if cfg == nil {
+		t.Fatalf("expected sql config")
+	}
+	if cfg.Server != "https://postpass.example/api/0.2/" {
+		t.Fatalf("unexpected server: %s", cfg.Server)
+	}
+	if cfg.Params["token"] != "abc" || cfg.Params["foo"] != "bar" {
+		t.Fatalf("unexpected params: %#v", cfg.Params)
+	}
+	if _, ok := cfg.Params["server"]; ok {
+		t.Fatalf("server should not be in params")
 	}
 }
 
