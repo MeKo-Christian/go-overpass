@@ -30,9 +30,13 @@ type overpassResponseElement struct {
 	UID       int64       `json:"uid"`
 	Nodes     []int64     `json:"nodes"`
 	Members   []struct {
-		Type ElementType `json:"type"`
-		Ref  int64       `json:"ref"`
-		Role string      `json:"role"`
+		Type     ElementType `json:"type"`
+		Ref      int64       `json:"ref"`
+		Role     string      `json:"role"`
+		Geometry []struct {
+			Lat float64 `json:"lat"`
+			Lon float64 `json:"lon"`
+		} `json:"geometry,omitempty"`
 	} `json:"members"`
 	Geometry []struct {
 		Lat float64 `json:"lat"`
@@ -167,7 +171,18 @@ func unmarshal(body []byte) (Result, error) {
 				case ElementTypeNode:
 					relationMember.Node = result.getNode(member.Ref)
 				case ElementTypeWay:
-					relationMember.Way = result.getWay(member.Ref)
+					// Get or create the way from the result
+					way := result.getWay(member.Ref)
+					relationMember.Way = way
+					// If inline geometry is provided (from "out geom"), populate the way's geometry
+					// This is needed for multipolygon relations where member ways may not be
+					// returned as separate elements but have their geometry embedded in the relation
+					if len(member.Geometry) > 0 && len(way.Geometry) == 0 {
+						way.Geometry = make([]Point, len(member.Geometry))
+						for i, g := range member.Geometry {
+							way.Geometry[i] = Point{Lat: g.Lat, Lon: g.Lon}
+						}
+					}
 				case ElementTypeRelation:
 					relationMember.Relation = result.getRelation(member.Ref)
 				}
