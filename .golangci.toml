@@ -3,6 +3,7 @@ version = '2'
 [linters]
 default = 'all'
 disable = [
+  'containedctx',
   'depguard',
   'exhaustive',
   'exhaustruct',
@@ -12,6 +13,7 @@ disable = [
   'musttag',
   'nlreturn',
   'sqlclosecheck',
+  'tagliatelle',
   'wsl',
 ]
 enable = ['wsl_v5']
@@ -52,6 +54,10 @@ path = '.*_test\.go'
 [[linters.exclusions.rules]]
 linters = ['paralleltest']
 text = 'TestPackageLevelQueryContext|TestPackageLevelQuery'
+
+[[linters.exclusions.rules]]
+linters = ['testpackage']
+path = '.*_test\.go'
 
 [severity]
 default = 'warn'

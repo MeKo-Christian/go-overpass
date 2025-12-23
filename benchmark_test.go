@@ -50,7 +50,7 @@ func BenchmarkQuery(b *testing.B) {
 
 // BenchmarkQueryContext benchmarks context-aware query.
 func BenchmarkQueryContext(b *testing.B) {
-	client := NewWithSettings(apiEndpoint, 1, &mockConcurrentHttpClient{})
+	client := NewWithSettings(apiEndpoint, 1, &mockConcurrentHTTPClient{})
 	ctx := context.Background()
 
 	b.ResetTimer()
@@ -65,7 +65,7 @@ func BenchmarkQueryContext(b *testing.B) {
 
 // BenchmarkConcurrentQueries benchmarks parallel request handling.
 func BenchmarkConcurrentQueries(b *testing.B) {
-	client := NewWithSettings(apiEndpoint, 5, &mockConcurrentHttpClient{})
+	client := NewWithSettings(apiEndpoint, 5, &mockConcurrentHTTPClient{})
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {

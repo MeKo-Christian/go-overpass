@@ -1,6 +1,7 @@
 package turbo
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -100,6 +101,9 @@ func (e *ParseError) Error() string {
 	return "mapcss: " + e.Message
 }
 
+// ErrInvalidHexColor is returned when an invalid hex color is encountered.
+var ErrInvalidHexColor = errors.New("invalid hex color")
+
 // ParseMapCSS parses a MapCSS stylesheet string into a Stylesheet structure.
 func ParseMapCSS(input string) (*Stylesheet, error) {
 	p := &parser{
@@ -131,11 +135,7 @@ func (p *parser) parse() (*Stylesheet, error) {
 
 		// Skip @import statements (not fully supported)
 		if p.peek() == '@' {
-			err := p.skipAtRule()
-			if err != nil {
-				return nil, err
-			}
-
+			p.skipAtRule()
 			continue
 		}
 
@@ -159,7 +159,7 @@ func (p *parser) parseRule() (*Rule, error) {
 	}
 
 	if len(selectors) == 0 {
-		return nil, nil
+		return nil, p.error("no selectors found")
 	}
 
 	p.skipWhitespaceAndComments()
@@ -229,7 +229,7 @@ func (p *parser) parseSelector() (*Selector, error) {
 	p.skipWhitespaceAndComments()
 
 	if p.pos >= len(p.input) {
-		return nil, nil
+		return nil, p.error("unexpected end of input")
 	}
 
 	var selectors []*Selector
@@ -263,7 +263,7 @@ func (p *parser) parseSelector() (*Selector, error) {
 	}
 
 	if len(selectors) == 0 {
-		return nil, nil
+		return nil, p.error("no selector parsed")
 	}
 
 	// Link selectors as parent chain (last is the main selector)
@@ -619,33 +619,36 @@ func (p *parser) parseValue() (*Value, error) {
 	if color := parseNamedColor(rawStr); color != nil {
 		val.Type = ValueTypeColor
 		val.Color = color
-	} else if num, err := strconv.ParseFloat(rawStr, 64); err == nil {
-		val.Type = ValueTypeNumber
-		val.Number = num
-	} else if strings.Contains(rawStr, ",") && !strings.ContainsAny(rawStr, "()") {
-		// Might be dashes pattern
-		parts := strings.Split(rawStr, ",")
-		var dashes []float64
-		allNumeric := true
+	} else {
+		num, err := strconv.ParseFloat(rawStr, 64)
+		if err == nil {
+			val.Type = ValueTypeNumber
+			val.Number = num
+		} else if strings.Contains(rawStr, ",") && !strings.ContainsAny(rawStr, "()") {
+			// Might be dashes pattern
+			parts := strings.Split(rawStr, ",")
+			var dashes []float64
+			allNumeric := true
 
-		for _, part := range parts {
-			num, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
-			if err != nil {
-				allNumeric = false
-				break
+			for _, part := range parts {
+				num, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
+				if err != nil {
+					allNumeric = false
+					break
+				}
+
+				dashes = append(dashes, num)
 			}
 
-			dashes = append(dashes, num)
-		}
-
-		if allNumeric {
-			val.Type = ValueTypeDashes
-			val.Dashes = dashes
+			if allNumeric {
+				val.Type = ValueTypeDashes
+				val.Dashes = dashes
+			} else {
+				val.Type = ValueTypeKeyword
+			}
 		} else {
 			val.Type = ValueTypeKeyword
 		}
-	} else {
-		val.Type = ValueTypeKeyword
 	}
 
 	// Restore pos if we didn't consume anything
@@ -957,7 +960,7 @@ func (p *parser) skipWhitespaceAndComments() {
 	}
 }
 
-func (p *parser) skipAtRule() error {
+func (p *parser) skipAtRule() {
 	// Skip @import or other @ rules
 	for p.pos < len(p.input) && p.peek() != ';' && p.peek() != '{' {
 		p.advance()
@@ -982,8 +985,6 @@ func (p *parser) skipAtRule() error {
 			p.advance() // skip ;
 		}
 	}
-
-	return nil
 }
 
 func (p *parser) peek() byte {
@@ -1064,7 +1065,7 @@ func parseHexColorValue(hex string) (*Color, error) {
 		b = float64(hexVal(hex[4])*16+hexVal(hex[5])) / 255
 		a = float64(hexVal(hex[6])*16+hexVal(hex[7])) / 255
 	default:
-		return nil, fmt.Errorf("invalid hex color: #%s", hex)
+		return nil, fmt.Errorf("%w: #%s", ErrInvalidHexColor, hex)
 	}
 
 	return &Color{R: r, G: g, B: b, A: a}, nil

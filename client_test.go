@@ -65,7 +65,7 @@ func TestClientRateLimiting(t *testing.T) {
 	currentConcurrent := int32(0)
 
 	// Custom client that simulates slow requests
-	slowClient := &mockSlowHttpClient{
+	slowClient := &mockSlowHTTPClient{
 		delay: 100 * time.Millisecond,
 		onRequest: func() {
 			current := atomic.AddInt32(&currentConcurrent, 1)
@@ -73,8 +73,8 @@ func TestClientRateLimiting(t *testing.T) {
 
 			// Track max concurrent
 			for {
-				max := atomic.LoadInt32(&maxConcurrent)
-				if current <= max || atomic.CompareAndSwapInt32(&maxConcurrent, max, current) {
+				maxCur := atomic.LoadInt32(&maxConcurrent)
+				if current <= maxCur || atomic.CompareAndSwapInt32(&maxConcurrent, maxCur, current) {
 					break
 				}
 			}
@@ -105,20 +105,20 @@ func TestClientRateLimiting(t *testing.T) {
 		t.Errorf("expected %d requests, got %d", numRequests, requestCount)
 	}
 
-	max := atomic.LoadInt32(&maxConcurrent)
-	if max > int32(maxParallel) {
-		t.Errorf("rate limiting failed: max concurrent %d exceeds limit %d", max, maxParallel)
+	maxCur := atomic.LoadInt32(&maxConcurrent)
+	if maxCur > int32(maxParallel) {
+		t.Errorf("rate limiting failed: max concurrent %d exceeds limit %d", maxCur, maxParallel)
 	}
 
-	t.Logf("Max concurrent requests: %d (limit: %d)", max, maxParallel)
+	t.Logf("Max concurrent requests: %d (limit: %d)", maxCur, maxParallel)
 }
 
 func TestClientConcurrency(t *testing.T) {
 	t.Parallel()
 
 	// Test that multiple goroutines can safely use the client
-	// Use mockConcurrentHttpClient that creates fresh response body for each request
-	client := NewWithSettings(apiEndpoint, 3, &mockConcurrentHttpClient{})
+	// Use mockConcurrentHTTPClient that creates fresh response body for each request
+	client := NewWithSettings(apiEndpoint, 3, &mockConcurrentHTTPClient{})
 
 	numGoroutines := 10
 	var waitGroup sync.WaitGroup
@@ -148,14 +148,14 @@ func TestClientConcurrency(t *testing.T) {
 	}
 }
 
-// mockSlowHttpClient simulates slow HTTP responses for rate limiting tests.
-type mockSlowHttpClient struct {
+// mockSlowHTTPClient simulates slow HTTP responses for rate limiting tests.
+type mockSlowHTTPClient struct {
 	delay      time.Duration
 	onRequest  func()
 	onResponse func()
 }
 
-func (m *mockSlowHttpClient) Do(req *http.Request) (*http.Response, error) {
+func (m *mockSlowHTTPClient) Do(_ *http.Request) (*http.Response, error) {
 	if m.onRequest != nil {
 		m.onRequest()
 	}
@@ -172,10 +172,10 @@ func (m *mockSlowHttpClient) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-// mockConcurrentHttpClient creates fresh response bodies for each request (concurrency-safe).
-type mockConcurrentHttpClient struct{}
+// mockConcurrentHTTPClient creates fresh response bodies for each request (concurrency-safe).
+type mockConcurrentHTTPClient struct{}
 
-func (m *mockConcurrentHttpClient) Do(req *http.Request) (*http.Response, error) {
+func (m *mockConcurrentHTTPClient) Do(_ *http.Request) (*http.Response, error) {
 	// Create a fresh body for each request to avoid shared state issues
 	return &http.Response{
 		StatusCode: http.StatusOK,

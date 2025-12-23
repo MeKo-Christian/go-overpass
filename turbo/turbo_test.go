@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const testServerURL = "https://postpass.example/api/0.2/"
+
 func TestExpandBBoxAndCenter(t *testing.T) {
 	t.Parallel()
 
@@ -140,7 +142,7 @@ func TestApplyEndpointOverride(t *testing.T) {
 func TestSQLDataSource(t *testing.T) {
 	t.Parallel()
 
-	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc}}
+	query := `{{data:sql,server=` + testServerURL + `,token=abc}}
 node(1);out;`
 
 	res, err := Expand(query, Options{})
@@ -152,11 +154,11 @@ node(1);out;`
 		t.Fatalf("expected sql data mode")
 	}
 
-	if res.DataServer != "https://postpass.example/api/0.2/" {
+	if res.DataServer != testServerURL {
 		t.Fatalf("expected data server to be captured, got %q", res.DataServer)
 	}
 
-	if res.Data.Parsed.Server != "https://postpass.example/api/0.2/" {
+	if res.Data.Parsed.Server != testServerURL {
 		t.Fatalf("expected parsed server to be captured, got %q", res.Data.Parsed.Server)
 	}
 
@@ -172,7 +174,7 @@ node(1);out;`
 func TestSQLDataConfigFromResult(t *testing.T) {
 	t.Parallel()
 
-	query := `{{data:sql,server=https://postpass.example/api/0.2/,token=abc,foo=bar}}
+	query := `{{data:sql,server=` + testServerURL + `,token=abc,foo=bar}}
 node(1);out;`
 
 	res, err := Expand(query, Options{})
@@ -185,7 +187,7 @@ node(1);out;`
 		t.Fatalf("expected sql config")
 	}
 
-	if cfg.Server != "https://postpass.example/api/0.2/" {
+	if cfg.Server != testServerURL {
 		t.Fatalf("unexpected server: %s", cfg.Server)
 	}
 
@@ -225,7 +227,7 @@ type fakeGeocoder struct {
 	err    error
 }
 
-func (f fakeGeocoder) Geocode(query string) (GeocodeResult, error) {
+func (f fakeGeocoder) Geocode(_ string) (GeocodeResult, error) {
 	return f.result, f.err
 }
 
@@ -241,7 +243,8 @@ func TestGeocodeMacros(t *testing.T) {
 		},
 	}
 
-	res, err := Expand("{{geocodeId:Vienna}};{{geocodeArea:Vienna}};{{geocodeBbox:Vienna}};{{geocodeCoords:Vienna}}", Options{
+	query := "{{geocodeId:Vienna}};{{geocodeArea:Vienna}};{{geocodeBbox:Vienna}};{{geocodeCoords:Vienna}}"
+	res, err := Expand(query, Options{
 		Geocoder: geocoder,
 	})
 	if err != nil {

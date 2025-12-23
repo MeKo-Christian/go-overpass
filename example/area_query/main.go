@@ -64,7 +64,7 @@ func main() {
 		log.Printf("- %s (Way ID: %d)\n", name, way.ID)
 
 		// Ways might have geometry from 'out center' or 'out geom'
-		if way.Geometry != nil && len(way.Geometry) > 0 {
+		if len(way.Geometry) > 0 {
 			// Use first point as approximate center (or calculate actual center)
 			log.Printf("  Geometry available (%d points)\n", len(way.Geometry))
 		}

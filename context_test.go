@@ -38,7 +38,7 @@ func TestQueryContext_Cancellation(t *testing.T) {
 	t.Parallel()
 
 	// Create a client with a slow mock that checks for context cancellation
-	slowClient := &mockCancellableHttpClient{
+	slowClient := &mockCancellableHTTPClient{
 		delay: 200 * time.Millisecond,
 	}
 	client := NewWithSettings(apiEndpoint, 1, slowClient)
@@ -64,7 +64,7 @@ func TestQueryContext_Timeout(t *testing.T) {
 	t.Parallel()
 
 	// Create a client with a slow mock
-	slowClient := &mockCancellableHttpClient{
+	slowClient := &mockCancellableHTTPClient{
 		delay: 200 * time.Millisecond,
 	}
 	client := NewWithSettings(apiEndpoint, 1, slowClient)
@@ -191,12 +191,12 @@ func TestPackageLevelQuery(t *testing.T) {
 	}
 }
 
-// mockCancellableHttpClient simulates HTTP client that respects context cancellation.
-type mockCancellableHttpClient struct {
+// mockCancellableHTTPClient simulates HTTP client that respects context cancellation.
+type mockCancellableHTTPClient struct {
 	delay time.Duration
 }
 
-func (m *mockCancellableHttpClient) Do(req *http.Request) (*http.Response, error) {
+func (m *mockCancellableHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	// Check if context is already cancelled
 	select {
 	case <-req.Context().Done():

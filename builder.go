@@ -156,7 +156,7 @@ func (qb *QueryBuilder) Timeout(seconds int) *QueryBuilder {
 
 // Build constructs the Overpass QL query string.
 func (qb *QueryBuilder) Build() string {
-	var parts []string
+	parts := make([]string, 0, 10)
 
 	// Settings
 	if len(qb.settings) > 0 {

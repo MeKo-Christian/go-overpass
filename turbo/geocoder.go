@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+const (
+	osmTypeNode     = "node"
+	osmTypeWay      = "way"
+	osmTypeRelation = "relation"
+)
+
 // Geocoder resolves a free-form query into OSM identifiers and geometry.
 // Implementations can call external services (e.g., Nominatim).
 type Geocoder interface {
@@ -32,7 +38,7 @@ func expandGeocode(content string, opts Options, format QueryFormat) (string, er
 
 	result, err := opts.Geocoder.Geocode(query)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("geocoding failed: %w", err)
 	}
 
 	switch kind {
@@ -103,12 +109,12 @@ func parseGeocodeMacro(content string) (string, string, bool) {
 
 func normalizeOSMType(t string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(t)) {
-	case "node":
-		return "node", true
-	case "way":
-		return "way", true
-	case "relation":
-		return "relation", true
+	case osmTypeNode:
+		return osmTypeNode, true
+	case osmTypeWay:
+		return osmTypeWay, true
+	case osmTypeRelation:
+		return osmTypeRelation, true
 	default:
 		return "", false
 	}
@@ -121,9 +127,9 @@ func deriveAreaID(result GeocodeResult) (int64, error) {
 	}
 
 	switch typeStr {
-	case "relation":
+	case osmTypeRelation:
 		return 3600000000 + result.OSMID, nil
-	case "way":
+	case osmTypeWay:
 		return 2400000000 + result.OSMID, nil
 	default:
 		return 0, ErrGeocodeData

@@ -41,7 +41,7 @@ func NewWithSettings(
 		httpClient = http.DefaultClient
 	}
 
-	c := Client{
+	client := Client{
 		apiEndpoint: apiEndpoint,
 		httpClient:  httpClient,
 		semaphore:   make(chan struct{}, maxParallel),
@@ -51,12 +51,12 @@ func NewWithSettings(
 		cacheCancel: cancel,
 	}
 	for i := 0; i < maxParallel; i++ {
-		c.semaphore <- struct{}{}
+		client.semaphore <- struct{}{}
 	}
 
-	c.cache.startCleanupRoutine(ctx)
+	client.cache.startCleanupRoutine(ctx)
 
-	return c
+	return client
 }
 
 // NewWithRetry returns Client with custom retry configuration.

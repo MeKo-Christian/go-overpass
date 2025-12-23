@@ -61,8 +61,9 @@ func (c *Client) retryableHTTPPost(ctx context.Context, query string) ([]byte, e
 
 	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
 		// Check context before attempting
-		if err := ctx.Err(); err != nil {
-			return nil, err
+		err := ctx.Err()
+		if err != nil {
+			return nil, fmt.Errorf("context error: %w", err)
 		}
 
 		body, err := c.httpPost(ctx, query)
@@ -92,7 +93,7 @@ func (c *Client) retryableHTTPPost(ctx context.Context, query string) ([]byte, e
 			case <-time.After(backoff):
 				// Continue to next attempt
 			case <-ctx.Done():
-				return nil, ctx.Err()
+				return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 			}
 		}
 	}

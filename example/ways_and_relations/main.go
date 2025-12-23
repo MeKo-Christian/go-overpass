@@ -41,7 +41,7 @@ func main() {
 		}
 
 		// If geometry is available, print first few coordinates
-		if way.Geometry != nil && len(way.Geometry) > 0 {
+		if len(way.Geometry) > 0 {
 			log.Printf("  Geometry (first 3 points):\n")
 
 			for i, point := range way.Geometry {

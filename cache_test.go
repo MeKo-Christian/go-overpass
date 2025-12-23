@@ -143,30 +143,30 @@ func TestCacheMaxEntries(t *testing.T) {
 		TTL:        time.Hour,
 		MaxEntries: 3,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	// Fill cache beyond capacity
-	c.set("e", "q1", Result{Count: 1})
+	cache.set("e", "q1", Result{Count: 1})
 	time.Sleep(time.Millisecond) // Ensure different timestamps
-	c.set("e", "q2", Result{Count: 2})
+	cache.set("e", "q2", Result{Count: 2})
 	time.Sleep(time.Millisecond)
-	c.set("e", "q3", Result{Count: 3})
+	cache.set("e", "q3", Result{Count: 3})
 	time.Sleep(time.Millisecond)
-	c.set("e", "q4", Result{Count: 4}) // Should evict oldest (q1)
+	cache.set("e", "q4", Result{Count: 4}) // Should evict oldest (q1)
 
 	// Check size
-	if size := c.size(); size != 3 {
+	if size := cache.size(); size != 3 {
 		t.Errorf("expected size=3, got %d", size)
 	}
 
 	// q1 should be evicted
-	_, hit := c.get("e", "q1")
+	_, hit := cache.get("e", "q1")
 	if hit {
 		t.Error("q1 should have been evicted")
 	}
 
 	// q2-q4 should exist
-	_, hit = c.get("e", "q4")
+	_, hit = cache.get("e", "q4")
 	if !hit {
 		t.Error("q4 should exist")
 	}
