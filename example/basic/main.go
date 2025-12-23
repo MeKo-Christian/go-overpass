@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/MeKo-Christian/go-overpass"
@@ -24,18 +23,18 @@ func main() {
 	}
 
 	// Print the results
-	fmt.Printf("Found %d nodes\n", len(result.Nodes))
+	log.Printf("Found %d nodes\n", len(result.Nodes))
 
 	for _, node := range result.Nodes {
-		fmt.Printf("Node ID: %d\n", node.ID)
-		fmt.Printf("  Location: %.6f, %.6f\n", node.Lat, node.Lon)
+		log.Printf("Node ID: %d\n", node.ID)
+		log.Printf("  Location: %.6f, %.6f\n", node.Lat, node.Lon)
 
 		if name, ok := node.Tags["name"]; ok {
-			fmt.Printf("  Name: %s\n", name)
+			log.Printf("  Name: %s\n", name)
 		}
 
 		if node.Tags != nil {
-			fmt.Printf("  Tags: %v\n", node.Tags)
+			log.Printf("  Tags: %v\n", node.Tags)
 		}
 	}
 }

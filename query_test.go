@@ -51,44 +51,44 @@ func TestUnmarshal(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		tc := tc // capture range variable
+	for i, testCase := range testCases {
+		testCase := testCase // capture range variable
 
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
 			t.Parallel()
 
-			got, err := unmarshal([]byte(tc.input))
+			got, err := unmarshal([]byte(testCase.input))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if tc.want.Nodes == nil {
-				tc.want.Nodes = map[int64]*Node{}
+			if testCase.want.Nodes == nil {
+				testCase.want.Nodes = map[int64]*Node{}
 			} else {
-				for id, n := range tc.want.Nodes {
+				for id, n := range testCase.want.Nodes {
 					n.ID = id
 				}
 			}
 
-			if tc.want.Ways == nil {
-				tc.want.Ways = map[int64]*Way{}
+			if testCase.want.Ways == nil {
+				testCase.want.Ways = map[int64]*Way{}
 			} else {
-				for id, w := range tc.want.Ways {
-					w.ID = id
-					if w.Nodes == nil {
-						w.Nodes = []*Node{}
+				for id, way := range testCase.want.Ways {
+					way.ID = id
+					if way.Nodes == nil {
+						way.Nodes = []*Node{}
 					}
 
-					if w.Geometry == nil {
-						w.Geometry = []Point{}
+					if way.Geometry == nil {
+						way.Geometry = []Point{}
 					}
 				}
 			}
 
-			if tc.want.Relations == nil {
-				tc.want.Relations = map[int64]*Relation{}
+			if testCase.want.Relations == nil {
+				testCase.want.Relations = map[int64]*Relation{}
 			} else {
-				for id, r := range tc.want.Relations {
+				for id, r := range testCase.want.Relations {
 					r.ID = id
 					if r.Members == nil {
 						r.Members = []RelationMember{}
@@ -96,8 +96,8 @@ func TestUnmarshal(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Fatalf("%v != %v", got, tc.want)
+			if !reflect.DeepEqual(got, testCase.want) {
+				t.Fatalf("%v != %v", got, testCase.want)
 			}
 		})
 	}
@@ -136,21 +136,21 @@ func TestQueryErrors(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		tc := tc // capture range variable
+	for i, testCase := range testCases {
+		testCase := testCase // capture range variable
 
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
 			t.Parallel()
 
-			cli := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{tc.res, tc.err})
+			cli := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{testCase.res, testCase.err})
 
 			_, err := cli.Query("")
 			if err == nil {
 				t.Fatal("unexpected success")
 			}
 
-			if err.Error() != tc.want {
-				t.Fatalf("%s != %s", err.Error(), tc.want)
+			if err.Error() != testCase.want {
+				t.Fatalf("%s != %s", err.Error(), testCase.want)
 			}
 
 			if errors.Unwrap(err) == nil {

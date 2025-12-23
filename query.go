@@ -109,61 +109,61 @@ func unmarshal(body []byte) (Result, error) {
 		Relations: make(map[int64]*Relation),
 	}
 
-	for _, el := range overpassRes.Elements {
+	for _, element := range overpassRes.Elements {
 		meta := Meta{
-			ID:        el.ID,
-			Timestamp: el.Timestamp,
-			Version:   el.Version,
-			Changeset: el.Changeset,
-			User:      el.User,
-			UID:       el.UID,
-			Tags:      el.Tags,
+			ID:        element.ID,
+			Timestamp: element.Timestamp,
+			Version:   element.Version,
+			Changeset: element.Changeset,
+			User:      element.User,
+			UID:       element.UID,
+			Tags:      element.Tags,
 		}
-		switch el.Type {
+		switch element.Type {
 		case ElementTypeNode:
-			node := result.getNode(el.ID)
+			node := result.getNode(element.ID)
 			*node = Node{
 				Meta: meta,
-				Lat:  el.Lat,
-				Lon:  el.Lon,
+				Lat:  element.Lat,
+				Lon:  element.Lon,
 			}
 		case ElementTypeWay:
-			way := result.getWay(el.ID)
+			way := result.getWay(element.ID)
 
 			*way = Way{
 				Meta:     meta,
-				Nodes:    make([]*Node, len(el.Nodes)),
-				Geometry: make([]Point, len(el.Geometry)),
+				Nodes:    make([]*Node, len(element.Nodes)),
+				Geometry: make([]Point, len(element.Geometry)),
 			}
-			for idx, nodeID := range el.Nodes {
+			for idx, nodeID := range element.Nodes {
 				way.Nodes[idx] = result.getNode(nodeID)
 			}
 
-			if el.Bounds != nil {
+			if element.Bounds != nil {
 				way.Bounds = &Box{
 					Min: Point{
-						Lat: el.Bounds.MinLat,
-						Lon: el.Bounds.MinLon,
+						Lat: element.Bounds.MinLat,
+						Lon: element.Bounds.MinLon,
 					},
 					Max: Point{
-						Lat: el.Bounds.MaxLat,
-						Lon: el.Bounds.MaxLon,
+						Lat: element.Bounds.MaxLat,
+						Lon: element.Bounds.MaxLon,
 					},
 				}
 			}
 
-			for idx, geo := range el.Geometry {
+			for idx, geo := range element.Geometry {
 				way.Geometry[idx].Lat = geo.Lat
 				way.Geometry[idx].Lon = geo.Lon
 			}
 		case ElementTypeRelation:
-			relation := result.getRelation(el.ID)
+			relation := result.getRelation(element.ID)
 
 			*relation = Relation{
 				Meta:    meta,
-				Members: make([]RelationMember, len(el.Members)),
+				Members: make([]RelationMember, len(element.Members)),
 			}
-			for idx, member := range el.Members {
+			for idx, member := range element.Members {
 				relationMember := RelationMember{
 					Type: member.Type,
 					Role: member.Role,
@@ -191,15 +191,15 @@ func unmarshal(body []byte) (Result, error) {
 				relation.Members[idx] = relationMember
 			}
 
-			if el.Bounds != nil {
+			if element.Bounds != nil {
 				relation.Bounds = &Box{
 					Min: Point{
-						Lat: el.Bounds.MinLat,
-						Lon: el.Bounds.MinLon,
+						Lat: element.Bounds.MinLat,
+						Lon: element.Bounds.MinLon,
 					},
 					Max: Point{
-						Lat: el.Bounds.MaxLat,
-						Lon: el.Bounds.MaxLon,
+						Lat: element.Bounds.MaxLat,
+						Lon: element.Bounds.MaxLon,
 					},
 				}
 			}

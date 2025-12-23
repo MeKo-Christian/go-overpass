@@ -404,15 +404,15 @@ func (p *parser) parseCondition() (*Condition, error) {
 
 	// Parse operator and value
 	if p.pos < len(p.input) && p.peek() != ']' {
-		op := p.parseOperator()
-		if op != "" {
-			cond.Operator = op
+		operator := p.parseOperator()
+		if operator != "" {
+			cond.Operator = operator
 
 			p.skipWhitespace()
 			cond.Value = p.parseValueString()
 
 			// Compile regex for =~ operator
-			if op == "=~" || op == "!~" {
+			if operator == "=~" || operator == "!~" {
 				// Remove surrounding slashes if present
 				pattern := cond.Value
 				if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
@@ -629,13 +629,13 @@ func (p *parser) parseValue() (*Value, error) {
 		allNumeric := true
 
 		for _, part := range parts {
-			n, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
+			num, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
 			if err != nil {
 				allNumeric = false
 				break
 			}
 
-			dashes = append(dashes, n)
+			dashes = append(dashes, num)
 		}
 
 		if allNumeric {
@@ -665,14 +665,14 @@ func (p *parser) parseRGBColor() (*Value, error) {
 		return nil, p.error("rgb() requires 3 values")
 	}
 
-	r, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
-	g, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
-	b, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
+	red, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+	green, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+	blue, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
 
 	return &Value{
 		Raw:   fmt.Sprintf("rgb(%s)", content),
 		Type:  ValueTypeColor,
-		Color: &Color{R: r, G: g, B: b, A: 1.0},
+		Color: &Color{R: red, G: green, B: blue, A: 1.0},
 	}, nil
 }
 
@@ -685,15 +685,15 @@ func (p *parser) parseRGBAColor() (*Value, error) {
 		return nil, p.error("rgba() requires 4 values")
 	}
 
-	r, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
-	g, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
-	b, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
-	a, _ := strconv.ParseFloat(strings.TrimSpace(parts[3]), 64)
+	red, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+	green, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+	blue, _ := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
+	alpha, _ := strconv.ParseFloat(strings.TrimSpace(parts[3]), 64)
 
 	return &Value{
 		Raw:   fmt.Sprintf("rgba(%s)", content),
 		Type:  ValueTypeColor,
-		Color: &Color{R: r, G: g, B: b, A: a},
+		Color: &Color{R: red, G: green, B: blue, A: alpha},
 	}, nil
 }
 
@@ -731,10 +731,10 @@ func (p *parser) parseUntilClosingParen() string {
 
 	depth := 1
 	for p.pos < len(p.input) && depth > 0 {
-		ch := p.peek()
-		if ch == '(' {
+		char := p.peek()
+		if char == '(' {
 			depth++
-		} else if ch == ')' {
+		} else if char == ')' {
 			depth--
 			if depth == 0 {
 				p.advance()
@@ -742,7 +742,7 @@ func (p *parser) parseUntilClosingParen() string {
 			}
 		}
 
-		buf.WriteByte(ch)
+		buf.WriteByte(char)
 		p.advance()
 	}
 
@@ -811,16 +811,16 @@ func (p *parser) parseQuotedString() string {
 	var buf strings.Builder
 
 	for p.pos < len(p.input) {
-		ch := p.peek()
-		if ch == '\\' && p.pos+1 < len(p.input) {
+		char := p.peek()
+		if char == '\\' && p.pos+1 < len(p.input) {
 			p.advance()
 			buf.WriteByte(p.peek())
 			p.advance()
-		} else if ch == quote {
+		} else if char == quote {
 			p.advance()
 			break
 		} else {
-			buf.WriteByte(ch)
+			buf.WriteByte(char)
 			p.advance()
 		}
 	}
@@ -835,13 +835,13 @@ func (p *parser) parseValueString() string {
 		return ""
 	}
 
-	ch := p.peek()
-	if ch == '"' || ch == '\'' {
+	char := p.peek()
+	if char == '"' || char == '\'' {
 		return p.parseQuotedString()
 	}
 
 	// Regex pattern
-	if ch == '/' {
+	if char == '/' {
 		return p.parseRegex()
 	}
 
@@ -1128,15 +1128,15 @@ func (c *Color) String() string {
 
 // Hex returns the color as a hex string.
 func (c *Color) Hex() string {
-	r := int(c.R * 255)
-	g := int(c.G * 255)
+	red := int(c.R * 255)
+	green := int(c.G * 255)
+	blue := int(c.B * 255)
 
-	b := int(c.B * 255)
 	if c.A == 1.0 {
-		return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+		return fmt.Sprintf("#%02x%02x%02x", red, green, blue)
 	}
 
-	a := int(c.A * 255)
+	alpha := int(c.A * 255)
 
-	return fmt.Sprintf("#%02x%02x%02x%02x", r, g, b, a)
+	return fmt.Sprintf("#%02x%02x%02x%02x", red, green, blue, alpha)
 }

@@ -8,13 +8,13 @@ import (
 func TestNewQueryBuilder(t *testing.T) {
 	t.Parallel()
 
-	qb := NewQueryBuilder()
+	queryBuilder := NewQueryBuilder()
 
-	if qb == nil {
+	if queryBuilder == nil {
 		t.Fatal("expected non-nil builder")
 	}
 
-	query := qb.Build()
+	query := queryBuilder.Build()
 	if !strings.Contains(query, "[out:json]") {
 		t.Error("expected [out:json] in default query")
 	}

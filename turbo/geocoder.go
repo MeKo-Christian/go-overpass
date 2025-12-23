@@ -37,16 +37,16 @@ func expandGeocode(content string, opts Options, format QueryFormat) (string, er
 
 	switch kind {
 	case "geocodeId":
-		t, ok := normalizeOSMType(result.OSMType)
+		typeStr, ok := normalizeOSMType(result.OSMType)
 		if !ok || result.OSMID <= 0 {
 			return "", ErrGeocodeData
 		}
 
 		if format == FormatXML {
-			return fmt.Sprintf(`type="%s" ref="%d"`, t, result.OSMID), nil
+			return fmt.Sprintf(`type="%s" ref="%d"`, typeStr, result.OSMID), nil
 		}
 
-		return fmt.Sprintf("%s(%d)", t, result.OSMID), nil
+		return fmt.Sprintf("%s(%d)", typeStr, result.OSMID), nil
 	case "geocodeArea":
 		areaID := result.AreaID
 		if areaID == 0 {
@@ -115,12 +115,12 @@ func normalizeOSMType(t string) (string, bool) {
 }
 
 func deriveAreaID(result GeocodeResult) (int64, error) {
-	t, ok := normalizeOSMType(result.OSMType)
+	typeStr, ok := normalizeOSMType(result.OSMType)
 	if !ok || result.OSMID <= 0 {
 		return 0, ErrGeocodeData
 	}
 
-	switch t {
+	switch typeStr {
 	case "relation":
 		return 3600000000 + result.OSMID, nil
 	case "way":

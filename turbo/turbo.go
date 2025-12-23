@@ -340,17 +340,17 @@ func parseDataSource(raw string) (*DataSource, error) {
 			continue
 		}
 
-		kv := strings.SplitN(part, "=", 2)
-		if len(kv) != 2 {
+		keyValue := strings.SplitN(part, "=", 2)
+		if len(keyValue) != 2 {
 			return nil, ErrBadMacro
 		}
 
-		key := strings.TrimSpace(kv[0])
+		key := strings.TrimSpace(keyValue[0])
 		if key == "" {
 			return nil, ErrBadMacro
 		}
 
-		value := strings.TrimSpace(kv[1])
+		value := strings.TrimSpace(keyValue[1])
 
 		options[key] = value
 		if key == "server" {

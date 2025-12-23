@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	// Print the results
-	fmt.Printf("Found %d cafes\n", len(result.Nodes))
+	log.Printf("Found %d cafes\n", len(result.Nodes))
 
 	for _, node := range result.Nodes {
 		name := node.Tags["name"]
@@ -46,7 +45,7 @@ func main() {
 			name = "Unnamed"
 		}
 
-		fmt.Printf("- %s (ID: %d) at %.6f, %.6f\n",
+		log.Printf("- %s (ID: %d) at %.6f, %.6f\n",
 			name, node.ID, node.Lat, node.Lon)
 	}
 }

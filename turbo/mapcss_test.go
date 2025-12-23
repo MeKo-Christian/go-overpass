@@ -397,13 +397,13 @@ func TestParseMapCSSMultipleRules(t *testing.T) {
 		node[amenity=cafe] { icon-image: url('cafe.png'); }
 	`
 
-	ss, err := ParseMapCSS(input)
+	styleSheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) != 3 {
-		t.Fatalf("got %d rules, want 3", len(ss.Rules))
+	if len(styleSheet.Rules) != 3 {
+		t.Fatalf("got %d rules, want 3", len(styleSheet.Rules))
 	}
 }
 

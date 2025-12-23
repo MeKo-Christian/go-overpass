@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/MeKo-Christian/go-overpass"
@@ -25,7 +24,7 @@ func main() {
 	}
 
 	// Print ways
-	fmt.Printf("Found %d ways\n", len(result.Ways))
+	log.Printf("Found %d ways\n", len(result.Ways))
 
 	for _, way := range result.Ways {
 		name := way.Tags["name"]
@@ -33,30 +32,30 @@ func main() {
 			name = "Unnamed way"
 		}
 
-		fmt.Printf("\nWay: %s (ID: %d)\n", name, way.ID)
-		fmt.Printf("  Number of nodes: %d\n", len(way.Nodes))
+		log.Printf("\nWay: %s (ID: %d)\n", name, way.ID)
+		log.Printf("  Number of nodes: %d\n", len(way.Nodes))
 
 		// Print some tags
 		if highway, ok := way.Tags["highway"]; ok {
-			fmt.Printf("  Highway type: %s\n", highway)
+			log.Printf("  Highway type: %s\n", highway)
 		}
 
 		// If geometry is available, print first few coordinates
 		if way.Geometry != nil && len(way.Geometry) > 0 {
-			fmt.Printf("  Geometry (first 3 points):\n")
+			log.Printf("  Geometry (first 3 points):\n")
 
 			for i, point := range way.Geometry {
 				if i >= 3 {
 					break
 				}
 
-				fmt.Printf("    %.6f, %.6f\n", point.Lat, point.Lon)
+				log.Printf("    %.6f, %.6f\n", point.Lat, point.Lon)
 			}
 		}
 
 		// Print referenced nodes
 		if len(way.Nodes) > 0 {
-			fmt.Printf("  Node IDs (first 5): ")
+			log.Printf("  Node IDs (first 5): ")
 
 			for i, node := range way.Nodes {
 				if i >= 5 {
@@ -64,13 +63,13 @@ func main() {
 				}
 
 				if i > 0 {
-					fmt.Printf(", ")
+					log.Printf(", ")
 				}
 
-				fmt.Printf("%d", node.ID)
+				log.Printf("%d", node.ID)
 			}
 
-			fmt.Println()
+			log.Printf("")
 		}
 	}
 
@@ -83,16 +82,16 @@ func main() {
 		out;
 	`
 
-	fmt.Println("\n--- Querying for relation ---")
+	log.Printf("\n--- Querying for relation ---")
 
 	relResult, err := client.Query(relationQuery)
 	if err != nil {
 		// This might fail if the relation doesn't exist, which is fine for an example
-		fmt.Printf("Note: Relation query failed (example ID may not exist): %v\n", err)
+		log.Printf("Note: Relation query failed (example ID may not exist): %v\n", err)
 		return
 	}
 
-	fmt.Printf("Found %d relations\n", len(relResult.Relations))
+	log.Printf("Found %d relations\n", len(relResult.Relations))
 
 	for _, relation := range relResult.Relations {
 		name := relation.Tags["name"]
@@ -100,13 +99,13 @@ func main() {
 			name = "Unnamed relation"
 		}
 
-		fmt.Printf("\nRelation: %s (ID: %d)\n", name, relation.ID)
-		fmt.Printf("  Type: %s\n", relation.Tags["type"])
-		fmt.Printf("  Number of members: %d\n", len(relation.Members))
+		log.Printf("\nRelation: %s (ID: %d)\n", name, relation.ID)
+		log.Printf("  Type: %s\n", relation.Tags["type"])
+		log.Printf("  Number of members: %d\n", len(relation.Members))
 
 		// Print first few members
 		if len(relation.Members) > 0 {
-			fmt.Printf("  Members (first 3):\n")
+			log.Printf("  Members (first 3):\n")
 
 			for i, member := range relation.Members {
 				if i >= 3 {
@@ -130,7 +129,7 @@ func main() {
 					}
 				}
 
-				fmt.Printf("    %s (role: %s, id: %d)\n",
+				log.Printf("    %s (role: %s, id: %d)\n",
 					member.Type, member.Role, memberID)
 			}
 		}

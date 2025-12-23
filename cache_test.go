@@ -30,13 +30,13 @@ func TestDefaultCacheConfig(t *testing.T) {
 func TestCacheDisabledByDefault(t *testing.T) {
 	t.Parallel()
 
-	c := newCache(DefaultCacheConfig())
+	cache := newCache(DefaultCacheConfig())
 
 	// Set should be no-op when disabled
-	c.set("endpoint", "query", Result{Count: 42})
+	cache.set("endpoint", "query", Result{Count: 42})
 
 	// Get should return miss
-	_, hit := c.get("endpoint", "query")
+	_, hit := cache.get("endpoint", "query")
 	if hit {
 		t.Error("cache hit when cache disabled")
 	}
@@ -106,14 +106,14 @@ func TestCacheKeyGeneration(t *testing.T) {
 	t.Parallel()
 
 	config := CacheConfig{Enabled: true, TTL: time.Minute, MaxEntries: 100}
-	c := newCache(config)
+	cache := newCache(config)
 
 	// Different queries should have different cache entries
-	c.set("endpoint", "query1", Result{Count: 1})
-	c.set("endpoint", "query2", Result{Count: 2})
+	cache.set("endpoint", "query1", Result{Count: 1})
+	cache.set("endpoint", "query2", Result{Count: 2})
 
-	result1, hit1 := c.get("endpoint", "query1")
-	result2, hit2 := c.get("endpoint", "query2")
+	result1, hit1 := cache.get("endpoint", "query1")
+	result2, hit2 := cache.get("endpoint", "query2")
 
 	if !hit1 || !hit2 {
 		t.Fatal("expected cache hits")
@@ -124,11 +124,11 @@ func TestCacheKeyGeneration(t *testing.T) {
 	}
 
 	// Different endpoints should have different cache entries
-	c.set("endpoint1", "query", Result{Count: 10})
-	c.set("endpoint2", "query", Result{Count: 20})
+	cache.set("endpoint1", "query", Result{Count: 10})
+	cache.set("endpoint2", "query", Result{Count: 20})
 
-	result1, _ = c.get("endpoint1", "query")
-	result2, _ = c.get("endpoint2", "query")
+	result1, _ = cache.get("endpoint1", "query")
+	result2, _ = cache.get("endpoint2", "query")
 
 	if result1.Count != 10 || result2.Count != 20 {
 		t.Error("endpoint differentiation failed")
@@ -331,13 +331,13 @@ func TestCacheDisabledSkipsStorage(t *testing.T) {
 		TTL:        time.Hour,
 		MaxEntries: 100,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	// Attempt to set
-	c.set("endpoint", "query", Result{Count: 42})
+	cache.set("endpoint", "query", Result{Count: 42})
 
 	// Size should be 0 since cache is disabled
-	if size := c.size(); size != 0 {
+	if size := cache.size(); size != 0 {
 		t.Errorf("expected size=0 when disabled, got %d", size)
 	}
 }

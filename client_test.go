@@ -88,18 +88,18 @@ func TestClientRateLimiting(t *testing.T) {
 
 	// Launch multiple concurrent requests
 	numRequests := 5
-	var wg sync.WaitGroup
-	wg.Add(numRequests)
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(numRequests)
 
 	for i := 0; i < numRequests; i++ {
 		go func() {
-			defer wg.Done()
+			defer waitGroup.Done()
 
 			_, _ = client.Query(`[out:json];node(1);out;`)
 		}()
 	}
 
-	wg.Wait()
+	waitGroup.Wait()
 
 	if atomic.LoadInt32(&requestCount) != int32(numRequests) {
 		t.Errorf("expected %d requests, got %d", numRequests, requestCount)
@@ -121,14 +121,14 @@ func TestClientConcurrency(t *testing.T) {
 	client := NewWithSettings(apiEndpoint, 3, &mockConcurrentHttpClient{})
 
 	numGoroutines := 10
-	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(numGoroutines)
 
 	errors := make(chan error, numGoroutines*5)
 
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
-			defer wg.Done()
+			defer waitGroup.Done()
 
 			for j := 0; j < 5; j++ {
 				_, err := client.Query(`[out:json];node(1);out;`)
@@ -139,7 +139,7 @@ func TestClientConcurrency(t *testing.T) {
 		}()
 	}
 
-	wg.Wait()
+	waitGroup.Wait()
 	close(errors)
 
 	// Check for errors

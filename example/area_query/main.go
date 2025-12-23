@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/MeKo-Christian/go-overpass"
@@ -29,7 +28,7 @@ func main() {
 	// Note: Result doesn't have bounds - individual elements may have bounds
 
 	// Process restaurant nodes
-	fmt.Printf("Found %d restaurant nodes\n", len(result.Nodes))
+	log.Printf("Found %d restaurant nodes\n", len(result.Nodes))
 
 	for _, node := range result.Nodes {
 		name := node.Tags["name"]
@@ -42,19 +41,19 @@ func main() {
 			cuisine = "unspecified"
 		}
 
-		fmt.Printf("- %s\n", name)
-		fmt.Printf("  Cuisine: %s\n", cuisine)
-		fmt.Printf("  Location: %.6f, %.6f\n", node.Lat, node.Lon)
+		log.Printf("- %s\n", name)
+		log.Printf("  Cuisine: %s\n", cuisine)
+		log.Printf("  Location: %.6f, %.6f\n", node.Lat, node.Lon)
 
 		if phone, ok := node.Tags["phone"]; ok {
-			fmt.Printf("  Phone: %s\n", phone)
+			log.Printf("  Phone: %s\n", phone)
 		}
 
-		fmt.Println()
+		log.Printf("")
 	}
 
 	// Process restaurant ways (buildings)
-	fmt.Printf("Found %d restaurant ways\n", len(result.Ways))
+	log.Printf("Found %d restaurant ways\n", len(result.Ways))
 
 	for _, way := range result.Ways {
 		name := way.Tags["name"]
@@ -62,18 +61,18 @@ func main() {
 			name = "Unnamed restaurant"
 		}
 
-		fmt.Printf("- %s (Way ID: %d)\n", name, way.ID)
+		log.Printf("- %s (Way ID: %d)\n", name, way.ID)
 
 		// Ways might have geometry from 'out center' or 'out geom'
 		if way.Geometry != nil && len(way.Geometry) > 0 {
 			// Use first point as approximate center (or calculate actual center)
-			fmt.Printf("  Geometry available (%d points)\n", len(way.Geometry))
+			log.Printf("  Geometry available (%d points)\n", len(way.Geometry))
 		}
 
-		fmt.Println()
+		log.Printf("")
 	}
 
 	// Summary
 	total := len(result.Nodes) + len(result.Ways) + len(result.Relations)
-	fmt.Printf("Total elements found: %d\n", total)
+	log.Printf("Total elements found: %d\n", total)
 }

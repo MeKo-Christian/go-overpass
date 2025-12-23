@@ -94,16 +94,16 @@ func TestGetCategory(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
 			got := meta.GetCategory()
-			if got != tc.expected {
-				t.Errorf("expected %s, got %s", tc.expected, got)
+			if got != testCase.expected {
+				t.Errorf("expected %s, got %s", testCase.expected, got)
 			}
 		})
 	}
@@ -496,6 +496,29 @@ func TestIsFoodRelated(t *testing.T) {
 	}
 }
 
+func testBoolMethod(t *testing.T, testCases []struct {
+	name     string
+	tags     map[string]string
+	expected bool
+}, checkFunc func(Meta) bool,
+) {
+	t.Helper()
+
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			meta := Meta{Tags: testCase.tags}
+
+			got := checkFunc(meta)
+			if got != testCase.expected {
+				t.Errorf("expected %v, got %v", testCase.expected, got)
+			}
+		})
+	}
+}
+
 func TestIsEducation(t *testing.T) {
 	t.Parallel()
 
@@ -514,19 +537,7 @@ func TestIsEducation(t *testing.T) {
 		{"no amenity", map[string]string{"building": "yes"}, false},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			meta := Meta{Tags: tc.tags}
-
-			got := meta.IsEducation()
-			if got != tc.expected {
-				t.Errorf("expected %v, got %v", tc.expected, got)
-			}
-		})
-	}
+	testBoolMethod(t, testCases, func(m Meta) bool { return m.IsEducation() })
 }
 
 func TestIsHealthcare(t *testing.T) {
@@ -547,19 +558,7 @@ func TestIsHealthcare(t *testing.T) {
 		{"no amenity", map[string]string{"building": "yes"}, false},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			meta := Meta{Tags: tc.tags}
-
-			got := meta.IsHealthcare()
-			if got != tc.expected {
-				t.Errorf("expected %v, got %v", tc.expected, got)
-			}
-		})
-	}
+	testBoolMethod(t, testCases, func(m Meta) bool { return m.IsHealthcare() })
 }
 
 func TestCategoryPriority(t *testing.T) {
