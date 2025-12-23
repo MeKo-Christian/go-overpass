@@ -80,6 +80,7 @@ func TestUnmarshal(t *testing.T) {
 					}
 				}
 			}
+
 			if tc.want.Relations == nil {
 				tc.want.Relations = map[int64]*Relation{}
 			} else {
@@ -90,6 +91,7 @@ func TestUnmarshal(t *testing.T) {
 					}
 				}
 			}
+
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("%v != %v", got, tc.want)
 			}
@@ -103,32 +105,57 @@ func TestQueryErrors(t *testing.T) {
 		err  error
 		want string
 	}{
-		{nil, errors.New("request fail"), "http error: request fail"},
-		{&http.Response{StatusCode: http.StatusBadRequest, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: 400 Bad Request"},
-		{&http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(iotest.ErrReader(errors.New("read fail")))}, nil, "http error: read fail"},
-		{&http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil))}, nil, "overpass engine error: unexpected end of JSON input"},
+		{
+			nil,
+			errors.New("request fail"),
+			"http error: request fail",
+		},
+		{
+			&http.Response{StatusCode: http.StatusBadRequest, Body: io.NopCloser(bytes.NewReader(nil))},
+			nil,
+			"overpass engine error: 400 Bad Request",
+		},
+		{
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(iotest.ErrReader(errors.New("read fail"))),
+			},
+			nil,
+			"http error: read fail",
+		},
+		{
+			&http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil))},
+			nil,
+			"overpass engine error: unexpected end of JSON input",
+		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
-			cli := NewWithSettings(apiEndpoint, 1, &mockHttpClient{tc.res, tc.err})
-			if _, err := cli.Query(""); err == nil {
+			cli := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{tc.res, tc.err})
+
+			_, err := cli.Query("")
+			if err == nil {
 				t.Fatal("unexpected success")
-			} else if err.Error() != tc.want {
+			}
+
+			if err.Error() != tc.want {
 				t.Fatalf("%s != %s", err.Error(), tc.want)
-			} else if err = errors.Unwrap(err); err == nil {
+			}
+
+			if errors.Unwrap(err) == nil {
 				t.Fatal("expected wrapped error")
 			}
 		})
 	}
 }
 
-type mockHttpClient struct {
+type mockHTTPClient struct {
 	res *http.Response
 	err error
 }
 
-func (m *mockHttpClient) Do(req *http.Request) (*http.Response, error) {
+func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.res, m.err
 }
 

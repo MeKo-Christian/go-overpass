@@ -31,7 +31,7 @@ func TestNew(t *testing.T) {
 func TestNewWithSettings(t *testing.T) {
 	customEndpoint := "https://custom.example.com/api"
 	maxParallel := 5
-	customClient := &mockHttpClient{}
+	customClient := &mockHTTPClient{}
 
 	client := NewWithSettings(customEndpoint, maxParallel, customClient)
 

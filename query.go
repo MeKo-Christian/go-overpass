@@ -95,6 +95,7 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 
 func unmarshal(body []byte) (Result, error) {
 	var overpassRes overpassResponse
+
 	err := json.Unmarshal(body, &overpassRes)
 	if err != nil {
 		return Result{}, fmt.Errorf("overpass engine error: %w", err)

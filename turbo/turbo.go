@@ -70,6 +70,17 @@ const (
 	FormatXML
 )
 
+// Time unit constants for date macro parsing.
+const (
+	unitSecond = "second"
+	unitMinute = "minute"
+	unitHour   = "hour"
+	unitDay    = "day"
+	unitWeek   = "week"
+	unitMonth  = "month"
+	unitYear   = "year"
+)
+
 var (
 	ErrMissingBBox     = errors.New("turbo: bbox not provided")
 	ErrMissingCenter   = errors.New("turbo: center not provided")
@@ -218,9 +229,7 @@ func normalizeEndpoint(raw string) string {
 		return ""
 	}
 
-	if strings.HasSuffix(trimmed, "/") {
-		trimmed = strings.TrimSuffix(trimmed, "/")
-	}
+	trimmed = strings.TrimSuffix(trimmed, "/")
 
 	if strings.HasSuffix(trimmed, "/api") {
 		return trimmed + "/interpreter"
@@ -389,19 +398,19 @@ func expandDate(content string, now time.Time) (string, error) {
 	}
 
 	switch unit {
-	case "second":
+	case unitSecond:
 		now = now.Add(-time.Duration(value) * time.Second)
-	case "minute":
+	case unitMinute:
 		now = now.Add(-time.Duration(value) * time.Minute)
-	case "hour":
+	case unitHour:
 		now = now.Add(-time.Duration(value) * time.Hour)
-	case "day":
+	case unitDay:
 		now = now.Add(-time.Duration(value) * 24 * time.Hour)
-	case "week":
+	case unitWeek:
 		now = now.Add(-time.Duration(value) * 7 * 24 * time.Hour)
-	case "month":
+	case unitMonth:
 		now = now.AddDate(0, -value, 0)
-	case "year":
+	case unitYear:
 		now = now.AddDate(-value, 0, 0)
 	default:
 		return "", ErrBadMacro
@@ -424,47 +433,48 @@ func parseRelativeDuration(raw string) (int, string, error) {
 	unit := strings.ToLower(fields[1])
 	switch unit {
 	case "second", "seconds":
-		return value, "second", nil
+		return value, unitSecond, nil
 	case "minute", "minutes":
-		return value, "minute", nil
+		return value, unitMinute, nil
 	case "hour", "hours":
-		return value, "hour", nil
+		return value, unitHour, nil
 	case "day", "days":
-		return value, "day", nil
+		return value, unitDay, nil
 	case "week", "weeks":
-		return value, "week", nil
+		return value, unitWeek, nil
 	case "month", "months":
-		return value, "month", nil
+		return value, unitMonth, nil
 	case "year", "years":
-		return value, "year", nil
+		return value, unitYear, nil
 	default:
 		return 0, "", ErrBadMacro
 	}
 }
 
 func scanMacros(query string, fn func(start int, end int, content string) error) error {
-	for i := 0; i < len(query); {
-		open := strings.Index(query[i:], "{{")
-		if open == -1 {
+	for pos := 0; pos < len(query); {
+		openIdx := strings.Index(query[pos:], "{{")
+		if openIdx == -1 {
 			return nil
 		}
 
-		open += i
+		openIdx += pos
 
-		close := strings.Index(query[open+2:], "}}")
-		if close == -1 {
+		closeIdx := strings.Index(query[openIdx+2:], "}}")
+		if closeIdx == -1 {
 			return ErrBadMacro
 		}
 
-		close = close + open + 2
+		closeIdx = closeIdx + openIdx + 2
 
-		content := query[open+2 : close]
-		err := fn(open, close+2, content)
+		content := query[openIdx+2 : closeIdx]
+
+		err := fn(openIdx, closeIdx+2, content)
 		if err != nil {
 			return err
 		}
 
-		i = close + 2
+		pos = closeIdx + 2
 	}
 
 	return nil

@@ -32,7 +32,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 
 // BenchmarkQuery benchmarks full query cycle with mock.
 func BenchmarkQuery(b *testing.B) {
-	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[{"type":"node","id":1,"lat":1.0,"lon":2.0}]}`),
@@ -43,7 +43,7 @@ func BenchmarkQuery(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// Note: This will fail after first iteration due to body being consumed
-		// In real benchmark, mockHttpClient would need to create fresh bodies
+		// In real benchmark, mockHTTPClient would need to create fresh bodies
 		_, _ = client.Query(`[out:json];node(1);out;`)
 	}
 }
@@ -90,7 +90,7 @@ func BenchmarkClientCreation(b *testing.B) {
 
 // BenchmarkClientCreationWithSettings benchmarks custom client initialization.
 func BenchmarkClientCreationWithSettings(b *testing.B) {
-	mockClient := &mockHttpClient{}
+	mockClient := &mockHTTPClient{}
 
 	b.ResetTimer()
 

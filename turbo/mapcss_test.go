@@ -55,9 +55,11 @@ func TestParseMapCSSBasicSelector(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) != tt.wantLen {
 				t.Errorf("got %d rules, want %d", len(ss.Rules), tt.wantLen)
 			}
+
 			if len(ss.Rules) > 0 && len(ss.Rules[0].Selectors) > 0 {
 				if ss.Rules[0].Selectors[0].Type != tt.wantType {
 					t.Errorf("got type %q, want %q", ss.Rules[0].Selectors[0].Type, tt.wantType)
@@ -139,20 +141,25 @@ func TestParseMapCSSConditions(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
+
 			sel := ss.Rules[0].Selectors[0]
 			if len(sel.Conditions) == 0 {
 				t.Fatal("expected at least one condition")
 			}
+
 			cond := sel.Conditions[0]
 			if cond.Key != tt.wantKey {
 				t.Errorf("got key %q, want %q", cond.Key, tt.wantKey)
 			}
+
 			if cond.Operator != tt.wantOp {
 				t.Errorf("got operator %q, want %q", cond.Operator, tt.wantOp)
 			}
+
 			if cond.Value != tt.wantVal {
 				t.Errorf("got value %q, want %q", cond.Value, tt.wantVal)
 			}
@@ -241,26 +248,33 @@ func TestParseMapCSSColors(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
+
 			decl := ss.Rules[0].Declarations[0]
 			if decl.Value.Type != ValueTypeColor {
 				t.Fatalf("expected color type, got %v", decl.Value.Type)
 			}
+
 			if decl.Value.Color == nil {
 				t.Fatal("expected non-nil color")
 			}
+
 			c := decl.Value.Color
 			if abs(c.R-tt.wantR) > tt.tolerance {
 				t.Errorf("R: got %.3f, want %.3f", c.R, tt.wantR)
 			}
+
 			if abs(c.G-tt.wantG) > tt.tolerance {
 				t.Errorf("G: got %.3f, want %.3f", c.G, tt.wantG)
 			}
+
 			if abs(c.B-tt.wantB) > tt.tolerance {
 				t.Errorf("B: got %.3f, want %.3f", c.B, tt.wantB)
 			}
+
 			if abs(c.A-tt.wantA) > tt.tolerance {
 				t.Errorf("A: got %.3f, want %.3f", c.A, tt.wantA)
 			}
@@ -318,13 +332,16 @@ func TestParseMapCSSDeclarations(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
+
 			decl := ss.Rules[0].Declarations[0]
 			if decl.Property != tt.wantProp {
 				t.Errorf("got property %q, want %q", decl.Property, tt.wantProp)
 			}
+
 			if decl.Value.Type != tt.wantType {
 				t.Errorf("got type %v, want %v", decl.Value.Type, tt.wantType)
 			}
@@ -334,13 +351,16 @@ func TestParseMapCSSDeclarations(t *testing.T) {
 
 func TestParseMapCSSMultipleSelectors(t *testing.T) {
 	input := "way[highway=primary], way[highway=secondary] { color: red; }"
+
 	ss, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) != 1 {
 		t.Fatalf("got %d rules, want 1", len(ss.Rules))
 	}
+
 	if len(ss.Rules[0].Selectors) != 2 {
 		t.Fatalf("got %d selectors, want 2", len(ss.Rules[0].Selectors))
 	}
@@ -352,10 +372,12 @@ func TestParseMapCSSMultipleRules(t *testing.T) {
 		way[highway=secondary] { color: blue; }
 		node[amenity=cafe] { icon-image: url('cafe.png'); }
 	`
+
 	ss, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) != 3 {
 		t.Fatalf("got %d rules, want 3", len(ss.Rules))
 	}
@@ -396,6 +418,7 @@ func TestParseMapCSSComments(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) != 1 {
 				t.Fatalf("got %d rules, want 1", len(ss.Rules))
 			}
@@ -436,13 +459,16 @@ func TestParseMapCSSSetDirective(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
+
 			decl := ss.Rules[0].Declarations[0]
 			if decl.Property != tt.wantProp {
 				t.Errorf("got property %q, want %q", decl.Property, tt.wantProp)
 			}
+
 			if decl.Value.Raw != tt.wantVal {
 				t.Errorf("got value %q, want %q", decl.Value.Raw, tt.wantVal)
 			}
@@ -484,13 +510,16 @@ func TestParseMapCSSPseudoClasses(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
+
 			sel := ss.Rules[0].Selectors[0]
 			if len(sel.PseudoClasses) != len(tt.pseudo) {
 				t.Fatalf("got %d pseudo-classes, want %d", len(sel.PseudoClasses), len(tt.pseudo))
 			}
+
 			for i, p := range tt.pseudo {
 				if sel.PseudoClasses[i] != p {
 					t.Errorf("pseudo-class %d: got %q, want %q", i, sel.PseudoClasses[i], p)
@@ -502,13 +531,16 @@ func TestParseMapCSSPseudoClasses(t *testing.T) {
 
 func TestParseMapCSSClassSelectors(t *testing.T) {
 	input := "way.minor_road { color: gray; }"
+
 	ss, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
+
 	sel := ss.Rules[0].Selectors[0]
 	if len(sel.Classes) != 1 || sel.Classes[0] != "minor_road" {
 		t.Errorf("got classes %v, want [minor_road]", sel.Classes)
@@ -517,13 +549,16 @@ func TestParseMapCSSClassSelectors(t *testing.T) {
 
 func TestParseMapCSSLayer(t *testing.T) {
 	input := "way::casing { width: 10; }"
+
 	ss, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
+
 	sel := ss.Rules[0].Selectors[0]
 	if sel.Layer != "casing" {
 		t.Errorf("got layer %q, want %q", sel.Layer, "casing")
@@ -563,13 +598,16 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
+
 			sel := ss.Rules[0].Selectors[0]
 			if sel.ZoomMin != tt.wantMin {
 				t.Errorf("got ZoomMin %d, want %d", sel.ZoomMin, tt.wantMin)
 			}
+
 			if sel.ZoomMax != tt.wantMax {
 				t.Errorf("got ZoomMax %d, want %d", sel.ZoomMax, tt.wantMax)
 			}
@@ -579,20 +617,25 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 
 func TestParseMapCSSDescendantSelector(t *testing.T) {
 	input := "relation[type=route] way[highway] { color: red; }"
+
 	ss, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
+
 	sel := ss.Rules[0].Selectors[0]
 	if sel.Type != "way" {
 		t.Errorf("got type %q, want %q", sel.Type, "way")
 	}
+
 	if sel.Parent == nil {
 		t.Fatal("expected parent selector")
 	}
+
 	if sel.Parent.Type != "relation" {
 		t.Errorf("got parent type %q, want %q", sel.Parent.Type, "relation")
 	}
@@ -625,17 +668,21 @@ func TestParseMapCSSQuotedStrings(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
+
 			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
+
 			sel := ss.Rules[0].Selectors[0]
 			if len(sel.Conditions) == 0 {
 				t.Fatal("expected at least one condition")
 			}
+
 			cond := sel.Conditions[0]
 			if cond.Key != tt.wantKey {
 				t.Errorf("got key %q, want %q", cond.Key, tt.wantKey)
 			}
+
 			if cond.Value != tt.wantVal {
 				t.Errorf("got value %q, want %q", cond.Value, tt.wantVal)
 			}
@@ -684,6 +731,7 @@ func TestParseMapCSSComplexStylesheet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
+
 	if len(ss.Rules) != 6 {
 		t.Errorf("got %d rules, want 6", len(ss.Rules))
 	}
@@ -769,5 +817,6 @@ func abs(x float64) float64 {
 	if x < 0 {
 		return -x
 	}
+
 	return x
 }

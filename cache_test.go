@@ -235,7 +235,7 @@ func TestCacheCleanupRoutine(t *testing.T) {
 
 func TestClientCacheIntegration(t *testing.T) {
 	successBody := []byte(`{"osm3s":{},"elements":[{"type":"node","id":1}]}`)
-	mock := &mockHttpClient{
+	mock := &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       io.NopCloser(bytes.NewReader(successBody)),

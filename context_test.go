@@ -9,7 +9,7 @@ import (
 )
 
 func TestQueryContext_Success(t *testing.T) {
-	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[{"type":"node","id":1,"lat":1.0,"lon":2.0}]}`),
@@ -79,7 +79,7 @@ func TestQueryContext_Timeout(t *testing.T) {
 }
 
 func TestQueryContext_Background(t *testing.T) {
-	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
@@ -98,7 +98,7 @@ func TestQueryContext_Background(t *testing.T) {
 }
 
 func TestQuery_UsesBackgroundContext(t *testing.T) {
-	client := NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	client := NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
@@ -126,7 +126,7 @@ func TestPackageLevelQueryContext(t *testing.T) {
 	originalClient := DefaultClient
 
 	// Replace with mock
-	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
@@ -155,7 +155,7 @@ func TestPackageLevelQuery(t *testing.T) {
 	originalClient := DefaultClient
 
 	// Replace with mock
-	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHttpClient{
+	DefaultClient = NewWithSettings(apiEndpoint, 1, &mockHTTPClient{
 		res: &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       newTestBody(`{"elements":[]}`),
