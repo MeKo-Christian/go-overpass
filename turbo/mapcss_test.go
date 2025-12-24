@@ -132,6 +132,7 @@ func TestParseMapCSSConditions(t *testing.T) {
 	})
 }
 
+//nolint:funlen,cyclop
 func TestParseMapCSSColors(t *testing.T) {
 	t.Parallel()
 

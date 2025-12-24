@@ -23,55 +23,7 @@ func main() {
 		log.Fatalf("Error querying Overpass API: %v", err)
 	}
 
-	// Print ways
-	log.Printf("Found %d ways\n", len(result.Ways))
-
-	for _, way := range result.Ways {
-		name := way.Tags["name"]
-		if name == "" {
-			name = "Unnamed way"
-		}
-
-		log.Printf("\nWay: %s (ID: %d)\n", name, way.ID)
-		log.Printf("  Number of nodes: %d\n", len(way.Nodes))
-
-		// Print some tags
-		if highway, ok := way.Tags["highway"]; ok {
-			log.Printf("  Highway type: %s\n", highway)
-		}
-
-		// If geometry is available, print first few coordinates
-		if len(way.Geometry) > 0 {
-			log.Printf("  Geometry (first 3 points):\n")
-
-			for i, point := range way.Geometry {
-				if i >= 3 {
-					break
-				}
-
-				log.Printf("    %.6f, %.6f\n", point.Lat, point.Lon)
-			}
-		}
-
-		// Print referenced nodes
-		if len(way.Nodes) > 0 {
-			log.Printf("  Node IDs (first 5): ")
-
-			for i, node := range way.Nodes {
-				if i >= 5 {
-					break
-				}
-
-				if i > 0 {
-					log.Printf(", ")
-				}
-
-				log.Printf("%d", node.ID)
-			}
-
-			log.Printf("")
-		}
-	}
+	printWays(&result)
 
 	// Example query for a relation (e.g., a bus route)
 	relationQuery := `
@@ -91,9 +43,68 @@ func main() {
 		return
 	}
 
-	log.Printf("Found %d relations\n", len(relResult.Relations))
+	printRelations(&relResult)
+}
 
-	for _, relation := range relResult.Relations {
+func printWays(result *overpass.Result) {
+	log.Printf("Found %d ways\n", len(result.Ways))
+
+	for _, way := range result.Ways {
+		printWay(way)
+	}
+}
+
+func printWay(way *overpass.Way) {
+	name := way.Tags["name"]
+	if name == "" {
+		name = "Unnamed way"
+	}
+
+	log.Printf("\nWay: %s (ID: %d)\n", name, way.ID)
+	log.Printf("  Number of nodes: %d\n", len(way.Nodes))
+
+	// Print some tags
+	if highway, ok := way.Tags["highway"]; ok {
+		log.Printf("  Highway type: %s\n", highway)
+	}
+
+	// If geometry is available, print first few coordinates
+	if len(way.Geometry) > 0 {
+		log.Printf("  Geometry (first 3 points):\n")
+
+		for i, point := range way.Geometry {
+			if i >= 3 {
+				break
+			}
+
+			log.Printf("    %.6f, %.6f\n", point.Lat, point.Lon)
+		}
+	}
+
+	// Print referenced nodes
+	if len(way.Nodes) > 0 {
+		log.Printf("  Node IDs (first 5): ")
+
+		for i, node := range way.Nodes {
+			if i >= 5 {
+				break
+			}
+
+			if i > 0 {
+				log.Printf(", ")
+			}
+
+			log.Printf("%d", node.ID)
+		}
+
+		log.Printf("")
+	}
+}
+
+func printRelations(result *overpass.Result) {
+	log.Printf("Found %d relations\n", len(result.Relations))
+
+	for _, relation := range result.Relations {
 		name := relation.Tags["name"]
 		if name == "" {
 			name = "Unnamed relation"
@@ -111,27 +122,32 @@ func main() {
 				if i >= 3 {
 					break
 				}
-				// Get the ID from the appropriate member type
-				var memberID int64
 
-				switch member.Type {
-				case overpass.ElementTypeNode:
-					if member.Node != nil {
-						memberID = member.Node.ID
-					}
-				case overpass.ElementTypeWay:
-					if member.Way != nil {
-						memberID = member.Way.ID
-					}
-				case overpass.ElementTypeRelation:
-					if member.Relation != nil {
-						memberID = member.Relation.ID
-					}
-				}
-
-				log.Printf("    %s (role: %s, id: %d)\n",
-					member.Type, member.Role, memberID)
+				printMember(member)
 			}
 		}
 	}
+}
+
+func printMember(member overpass.RelationMember) {
+	// Get the ID from the appropriate member type
+	var memberID int64
+
+	switch member.Type {
+	case overpass.ElementTypeNode:
+		if member.Node != nil {
+			memberID = member.Node.ID
+		}
+	case overpass.ElementTypeWay:
+		if member.Way != nil {
+			memberID = member.Way.ID
+		}
+	case overpass.ElementTypeRelation:
+		if member.Relation != nil {
+			memberID = member.Relation.ID
+		}
+	}
+
+	log.Printf("    %s (role: %s, id: %d)\n",
+		member.Type, member.Role, memberID)
 }

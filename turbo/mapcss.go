@@ -288,7 +288,7 @@ func (p *parser) parseSelectorChain() ([]*Selector, error) {
 	return selectors, nil
 }
 
-func (p *parser) parseSingleSelector() (*Selector, error) { //nolint:gocognit // complex selector parsing logic
+func (p *parser) parseSingleSelector() (*Selector, error) {
 	p.skipWhitespaceAndComments()
 
 	if p.pos >= len(p.input) {
@@ -302,7 +302,29 @@ func (p *parser) parseSingleSelector() (*Selector, error) { //nolint:gocognit //
 
 	sel := &Selector{}
 
-	// Parse type (node, way, relation, area, line, canvas, meta, *)
+	err := p.parseSelectorType(sel)
+	if err != nil {
+		return nil, err
+	}
+
+	p.parseSelectorLayer(sel)
+	p.parseSelectorZoomRange(sel)
+
+	err = p.parseSelectorModifiers(sel)
+	if err != nil {
+		return nil, err
+	}
+
+	if sel.Type == "" && len(sel.Conditions) == 0 && len(sel.PseudoClasses) == 0 && len(sel.Classes) == 0 {
+		return nil, ErrEmptySelector
+	}
+
+	return sel, nil
+}
+
+func (p *parser) parseSelectorType(sel *Selector) error {
+	char := p.peek()
+
 	switch {
 	case char == '*':
 		sel.Type = "*"
@@ -311,87 +333,119 @@ func (p *parser) parseSingleSelector() (*Selector, error) { //nolint:gocognit //
 	case isLetter(char):
 		sel.Type = p.parseIdent()
 	case char != '[' && char != ':' && char != '.' && char != '|':
-		return nil, ErrInvalidSelectorStart
+		return ErrInvalidSelectorStart
 	}
 
-	// Parse layer (::name)
+	return nil
+}
+
+func (p *parser) parseSelectorLayer(sel *Selector) {
 	if p.pos+1 < len(p.input) && p.input[p.pos:p.pos+2] == "::" {
 		p.advance()
 		p.advance()
 		sel.Layer = p.parseIdent()
 	}
+}
 
-	// Parse zoom range (|z12 or |z1-11)
-	if p.pos < len(p.input) && p.peek() == '|' {
+func (p *parser) parseSelectorZoomRange(sel *Selector) {
+	if p.pos >= len(p.input) || p.peek() != '|' {
+		return
+	}
+
+	p.advance()
+
+	if p.pos >= len(p.input) || p.peek() != 'z' {
+		return
+	}
+
+	p.advance()
+	p.parseZoomValues(sel)
+}
+
+func (p *parser) parseZoomValues(sel *Selector) {
+	zoomStr := p.parseNumber()
+
+	if strings.Contains(zoomStr, "-") {
+		p.parseZoomRange(sel, zoomStr)
+		return
+	}
+
+	zoom, _ := strconv.Atoi(zoomStr)
+	sel.ZoomMin = zoom
+	sel.ZoomMax = zoom
+
+	// Check for range like |z12-
+	if p.pos < len(p.input) && p.peek() == '-' {
 		p.advance()
 
-		if p.pos < len(p.input) && p.peek() == 'z' {
-			p.advance()
-
-			zoomStr := p.parseNumber()
-			if strings.Contains(zoomStr, "-") {
-				parts := strings.SplitN(zoomStr, "-", 2)
-				if len(parts) == 2 {
-					sel.ZoomMin, _ = strconv.Atoi(parts[0])
-					if parts[1] != "" {
-						sel.ZoomMax, _ = strconv.Atoi(parts[1])
-					}
-				}
-			} else {
-				zoom, _ := strconv.Atoi(zoomStr)
-				sel.ZoomMin = zoom
-				sel.ZoomMax = zoom
-				// Check for range like |z12-
-				if p.pos < len(p.input) && p.peek() == '-' {
-					p.advance()
-
-					maxStr := p.parseNumber()
-					if maxStr != "" {
-						sel.ZoomMax, _ = strconv.Atoi(maxStr)
-					} else {
-						sel.ZoomMax = 0 // unlimited
-					}
-				}
-			}
+		maxStr := p.parseNumber()
+		if maxStr != "" {
+			sel.ZoomMax, _ = strconv.Atoi(maxStr)
+		} else {
+			sel.ZoomMax = 0 // unlimited
 		}
 	}
+}
 
-	// Parse conditions [key=value], pseudo-classes :hover, and classes .name
-loop:
+func (p *parser) parseZoomRange(sel *Selector, zoomStr string) {
+	parts := strings.SplitN(zoomStr, "-", 2)
+	if len(parts) == 2 {
+		sel.ZoomMin, _ = strconv.Atoi(parts[0])
+		if parts[1] != "" {
+			sel.ZoomMax, _ = strconv.Atoi(parts[1])
+		}
+	}
+}
+
+func (p *parser) parseSelectorModifiers(sel *Selector) error {
 	for p.pos < len(p.input) {
 		char := p.peek()
+
 		switch {
 		case char == '[':
-			cond, err := p.parseCondition()
+			err := p.parseSelectorCondition(sel)
 			if err != nil {
-				return nil, err
+				return err
 			}
-
-			sel.Conditions = append(sel.Conditions, *cond)
 		case char == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':'):
-			p.advance()
-
-			pseudo := p.parseIdent()
-			if pseudo != "" {
-				sel.PseudoClasses = append(sel.PseudoClasses, pseudo)
-			}
+			p.parseSelectorPseudoClass(sel)
 		case char == '.':
-			p.advance()
-
-			class := p.parseIdent()
-			if class != "" {
-				sel.Classes = append(sel.Classes, class)
-			}
+			p.parseSelectorClass(sel)
 		default:
-			break loop
+			return nil
 		}
 	}
 
-	if sel.Type == "" && len(sel.Conditions) == 0 && len(sel.PseudoClasses) == 0 && len(sel.Classes) == 0 {
-		return nil, ErrEmptySelector
+	return nil
+}
+
+func (p *parser) parseSelectorCondition(sel *Selector) error {
+	cond, err := p.parseCondition()
+	if err != nil {
+		return err
 	}
 
-	return sel, nil
+	sel.Conditions = append(sel.Conditions, *cond)
+
+	return nil
+}
+
+func (p *parser) parseSelectorPseudoClass(sel *Selector) {
+	p.advance()
+
+	pseudo := p.parseIdent()
+	if pseudo != "" {
+		sel.PseudoClasses = append(sel.PseudoClasses, pseudo)
+	}
+}
+
+func (p *parser) parseSelectorClass(sel *Selector) {
+	p.advance()
+
+	class := p.parseIdent()
+	if class != "" {
+		sel.Classes = append(sel.Classes, class)
+	}
 }
 
 func (p *parser) compileConditionRegex(operator, value string) (*regexp.Regexp, error) {
@@ -1024,6 +1078,7 @@ func (p *parser) skipWhitespaceAndComments() {
 	}
 }
 
+//nolint:nestif
 func (p *parser) skipAtRule() {
 	// Skip @import or other @ rules
 	for p.pos < len(p.input) && p.peek() != ';' && p.peek() != '{' {

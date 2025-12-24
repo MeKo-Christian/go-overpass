@@ -64,44 +64,61 @@ func TestUnmarshal(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if testCase.want.Nodes == nil {
-				testCase.want.Nodes = map[int64]*Node{}
-			} else {
-				for id, n := range testCase.want.Nodes {
-					n.ID = id
-				}
-			}
-
-			if testCase.want.Ways == nil {
-				testCase.want.Ways = map[int64]*Way{}
-			} else {
-				for id, way := range testCase.want.Ways {
-					way.ID = id
-					if way.Nodes == nil {
-						way.Nodes = []*Node{}
-					}
-
-					if way.Geometry == nil {
-						way.Geometry = []Point{}
-					}
-				}
-			}
-
-			if testCase.want.Relations == nil {
-				testCase.want.Relations = map[int64]*Relation{}
-			} else {
-				for id, r := range testCase.want.Relations {
-					r.ID = id
-					if r.Members == nil {
-						r.Members = []RelationMember{}
-					}
-				}
-			}
+			normalizeResult(&testCase.want)
 
 			if !reflect.DeepEqual(got, testCase.want) {
 				t.Fatalf("%v != %v", got, testCase.want)
 			}
 		})
+	}
+}
+
+func normalizeResult(result *Result) {
+	normalizeNodes(result)
+	normalizeWays(result)
+	normalizeRelations(result)
+}
+
+func normalizeNodes(result *Result) {
+	if result.Nodes == nil {
+		result.Nodes = map[int64]*Node{}
+		return
+	}
+
+	for id, n := range result.Nodes {
+		n.ID = id
+	}
+}
+
+func normalizeWays(result *Result) {
+	if result.Ways == nil {
+		result.Ways = map[int64]*Way{}
+		return
+	}
+
+	for id, way := range result.Ways {
+		way.ID = id
+		if way.Nodes == nil {
+			way.Nodes = []*Node{}
+		}
+
+		if way.Geometry == nil {
+			way.Geometry = []Point{}
+		}
+	}
+}
+
+func normalizeRelations(result *Result) {
+	if result.Relations == nil {
+		result.Relations = map[int64]*Relation{}
+		return
+	}
+
+	for id, r := range result.Relations {
+		r.ID = id
+		if r.Members == nil {
+			r.Members = []RelationMember{}
+		}
 	}
 }
 

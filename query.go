@@ -93,7 +93,7 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 	return body, nil
 }
 
-func unmarshal(body []byte) (Result, error) { //nolint:gocognit // complex unmarshaling logic
+func unmarshal(body []byte) (Result, error) {
 	var overpassRes overpassResponse
 
 	err := json.Unmarshal(body, &overpassRes)
@@ -110,103 +110,136 @@ func unmarshal(body []byte) (Result, error) { //nolint:gocognit // complex unmar
 	}
 
 	for _, element := range overpassRes.Elements {
-		meta := Meta{
-			ID:        element.ID,
-			Timestamp: element.Timestamp,
-			Version:   element.Version,
-			Changeset: element.Changeset,
-			User:      element.User,
-			UID:       element.UID,
-			Tags:      element.Tags,
-		}
+		meta := buildMeta(element)
+
 		switch element.Type {
 		case ElementTypeNode:
-			node := result.getNode(element.ID)
-			*node = Node{
-				Meta: meta,
-				Lat:  element.Lat,
-				Lon:  element.Lon,
-			}
+			unmarshalNode(&result, element, meta)
 		case ElementTypeWay:
-			way := result.getWay(element.ID)
-
-			*way = Way{
-				Meta:     meta,
-				Nodes:    make([]*Node, len(element.Nodes)),
-				Geometry: make([]Point, len(element.Geometry)),
-			}
-			for idx, nodeID := range element.Nodes {
-				way.Nodes[idx] = result.getNode(nodeID)
-			}
-
-			if element.Bounds != nil {
-				way.Bounds = &Box{
-					Min: Point{
-						Lat: element.Bounds.MinLat,
-						Lon: element.Bounds.MinLon,
-					},
-					Max: Point{
-						Lat: element.Bounds.MaxLat,
-						Lon: element.Bounds.MaxLon,
-					},
-				}
-			}
-
-			for idx, geo := range element.Geometry {
-				way.Geometry[idx].Lat = geo.Lat
-				way.Geometry[idx].Lon = geo.Lon
-			}
+			unmarshalWay(&result, element, meta)
 		case ElementTypeRelation:
-			relation := result.getRelation(element.ID)
-
-			*relation = Relation{
-				Meta:    meta,
-				Members: make([]RelationMember, len(element.Members)),
-			}
-			for idx, member := range element.Members {
-				relationMember := RelationMember{
-					Type: member.Type,
-					Role: member.Role,
-				}
-				switch member.Type {
-				case ElementTypeNode:
-					relationMember.Node = result.getNode(member.Ref)
-				case ElementTypeWay:
-					// Get or create the way from the result
-					way := result.getWay(member.Ref)
-					relationMember.Way = way
-					// If inline geometry is provided (from "out geom"), populate the way's geometry
-					// This is needed for multipolygon relations where member ways may not be
-					// returned as separate elements but have their geometry embedded in the relation
-					if len(member.Geometry) > 0 && len(way.Geometry) == 0 {
-						way.Geometry = make([]Point, len(member.Geometry))
-						for i, g := range member.Geometry {
-							way.Geometry[i] = Point{Lat: g.Lat, Lon: g.Lon}
-						}
-					}
-				case ElementTypeRelation:
-					relationMember.Relation = result.getRelation(member.Ref)
-				}
-
-				relation.Members[idx] = relationMember
-			}
-
-			if element.Bounds != nil {
-				relation.Bounds = &Box{
-					Min: Point{
-						Lat: element.Bounds.MinLat,
-						Lon: element.Bounds.MinLon,
-					},
-					Max: Point{
-						Lat: element.Bounds.MaxLat,
-						Lon: element.Bounds.MaxLon,
-					},
-				}
-			}
+			unmarshalRelation(&result, element, meta)
 		}
 	}
 
 	return result, nil
+}
+
+func buildMeta(element overpassResponseElement) Meta {
+	return Meta{
+		ID:        element.ID,
+		Timestamp: element.Timestamp,
+		Version:   element.Version,
+		Changeset: element.Changeset,
+		User:      element.User,
+		UID:       element.UID,
+		Tags:      element.Tags,
+	}
+}
+
+func unmarshalNode(result *Result, element overpassResponseElement, meta Meta) {
+	node := result.getNode(element.ID)
+	*node = Node{
+		Meta: meta,
+		Lat:  element.Lat,
+		Lon:  element.Lon,
+	}
+}
+
+func unmarshalWay(result *Result, element overpassResponseElement, meta Meta) {
+	way := result.getWay(element.ID)
+
+	*way = Way{
+		Meta:     meta,
+		Nodes:    make([]*Node, len(element.Nodes)),
+		Geometry: make([]Point, len(element.Geometry)),
+	}
+
+	for idx, nodeID := range element.Nodes {
+		way.Nodes[idx] = result.getNode(nodeID)
+	}
+
+	if element.Bounds != nil {
+		way.Bounds = buildBounds(element.Bounds)
+	}
+
+	for idx, geo := range element.Geometry {
+		way.Geometry[idx].Lat = geo.Lat
+		way.Geometry[idx].Lon = geo.Lon
+	}
+}
+
+func unmarshalRelation(result *Result, element overpassResponseElement, meta Meta) {
+	relation := result.getRelation(element.ID)
+
+	*relation = Relation{
+		Meta:    meta,
+		Members: make([]RelationMember, len(element.Members)),
+	}
+
+	for idx, member := range element.Members {
+		relation.Members[idx] = buildRelationMember(result, member)
+	}
+
+	if element.Bounds != nil {
+		relation.Bounds = buildBounds(element.Bounds)
+	}
+}
+
+func buildRelationMember(result *Result, member struct {
+	Type     ElementType `json:"type"`
+	Ref      int64       `json:"ref"`
+	Role     string      `json:"role"`
+	Geometry []struct {
+		Lat float64 `json:"lat"`
+		Lon float64 `json:"lon"`
+	} `json:"geometry,omitempty"`
+},
+) RelationMember {
+	relationMember := RelationMember{
+		Type: member.Type,
+		Role: member.Role,
+	}
+
+	switch member.Type {
+	case ElementTypeNode:
+		relationMember.Node = result.getNode(member.Ref)
+	case ElementTypeWay:
+		way := result.getWay(member.Ref)
+		relationMember.Way = way
+		// If inline geometry is provided (from "out geom"), populate the way's geometry
+		// This is needed for multipolygon relations where member ways may not be
+		// returned as separate elements but have their geometry embedded in the relation
+		if len(member.Geometry) > 0 && len(way.Geometry) == 0 {
+			way.Geometry = make([]Point, len(member.Geometry))
+			for i, g := range member.Geometry {
+				way.Geometry[i] = Point{Lat: g.Lat, Lon: g.Lon}
+			}
+		}
+	case ElementTypeRelation:
+		relationMember.Relation = result.getRelation(member.Ref)
+	}
+
+	return relationMember
+}
+
+func buildBounds(boundsData *struct {
+	MinLat float64 `json:"minlat"`
+	MinLon float64 `json:"minlon"`
+	MaxLat float64 `json:"maxlat"`
+	MaxLon float64 `json:"maxlon"`
+},
+) *Box {
+	return &Box{
+		Min: Point{
+			Lat: boundsData.MinLat,
+			Lon: boundsData.MinLon,
+		},
+		Max: Point{
+			Lat: boundsData.MaxLat,
+			Lon: boundsData.MaxLon,
+		},
+	}
 }
 
 // QueryContext runs query with context using default client.

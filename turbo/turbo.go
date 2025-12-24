@@ -98,7 +98,7 @@ var (
 //   - {{style:...}} and {{data:...}} are removed from output and returned in Result
 //
 // Unsupported geocode macros return an error for now.
-func Expand(query string, opts Options) (Result, error) { //nolint:gocognit // complex macro expansion logic
+func Expand(query string, opts Options) (Result, error) {
 	format := detectFormat(query, opts.Format)
 
 	shortcuts := map[string]string{}
@@ -120,90 +120,14 @@ func Expand(query string, opts Options) (Result, error) { //nolint:gocognit // c
 
 	var res Result
 
-	expanded, err := replaceMacros(query, func(content string) (string, error) {
-		content = strings.TrimSpace(content)
-		if content == "" {
-			return "", ErrBadMacro
-		}
+	expander := &macroExpander{
+		result:    &res,
+		opts:      opts,
+		format:    format,
+		shortcuts: shortcuts,
+	}
 
-		if _, _, ok := parseShortcutDefinition(content); ok {
-			return "", nil
-		}
-
-		if strings.HasPrefix(content, "style:") {
-			style := strings.TrimSpace(strings.TrimPrefix(content, "style:"))
-
-			res.Style = style
-			if style != "" {
-				res.Styles = append(res.Styles, style)
-				// Parse the MapCSS stylesheet
-				parsed, err := ParseMapCSS(style)
-				if err != nil {
-					// Store nil for unparseable styles, don't fail the expansion
-					res.ParsedStyles = append(res.ParsedStyles, nil)
-				} else {
-					res.ParsedStyles = append(res.ParsedStyles, parsed)
-				}
-			}
-
-			return "", nil
-		}
-
-		if strings.HasPrefix(content, "data:") {
-			dataSrc, err := parseDataSource(strings.TrimPrefix(content, "data:"))
-			if err != nil {
-				return "", err
-			}
-
-			res.Data = dataSrc
-			if server, ok := dataSrc.Options["server"]; ok {
-				res.DataServer = server
-			}
-
-			if strings.EqualFold(dataSrc.Mode, "overpass") {
-				if server, ok := dataSrc.Options["server"]; ok {
-					res.EndpointOverride = normalizeEndpoint(server)
-				}
-			}
-
-			return "", nil
-		}
-
-		if strings.HasPrefix(content, "geocode") {
-			return expandGeocode(content, opts, format)
-		}
-
-		if content == "bbox" {
-			if opts.BBox == nil {
-				return "", ErrMissingBBox
-			}
-
-			return formatBBox(*opts.BBox, format), nil
-		}
-
-		if content == "center" {
-			if opts.Center == nil {
-				return "", ErrMissingCenter
-			}
-
-			return formatCenter(*opts.Center, format), nil
-		}
-
-		if strings.HasPrefix(content, "date") {
-			t, err := expandDate(content, opts.Now)
-			if err != nil {
-				return "", err
-			}
-
-			return t, nil
-		}
-
-		if value, ok := shortcuts[content]; ok {
-			return value, nil
-		}
-
-		return "", ErrBadMacro
-	})
+	expanded, err := replaceMacros(query, expander.expandMacro)
 	if err != nil {
 		return Result{}, err
 	}
@@ -211,6 +135,109 @@ func Expand(query string, opts Options) (Result, error) { //nolint:gocognit // c
 	res.Query = expanded
 
 	return res, nil
+}
+
+type macroExpander struct {
+	result    *Result
+	opts      Options
+	format    QueryFormat
+	shortcuts map[string]string
+}
+
+func (e *macroExpander) expandMacro(content string) (string, error) {
+	content = strings.TrimSpace(content)
+	if content == "" {
+		return "", ErrBadMacro
+	}
+
+	if _, _, ok := parseShortcutDefinition(content); ok {
+		return "", nil
+	}
+
+	if strings.HasPrefix(content, "style:") {
+		return e.expandStyleMacro(content)
+	}
+
+	if strings.HasPrefix(content, "data:") {
+		return e.expandDataMacro(content)
+	}
+
+	if strings.HasPrefix(content, "geocode") {
+		return expandGeocode(content, e.opts, e.format)
+	}
+
+	if content == "bbox" {
+		return e.expandBBoxMacro()
+	}
+
+	if content == "center" {
+		return e.expandCenterMacro()
+	}
+
+	if strings.HasPrefix(content, "date") {
+		return expandDate(content, e.opts.Now)
+	}
+
+	if value, ok := e.shortcuts[content]; ok {
+		return value, nil
+	}
+
+	return "", ErrBadMacro
+}
+
+func (e *macroExpander) expandStyleMacro(content string) (string, error) {
+	style := strings.TrimSpace(strings.TrimPrefix(content, "style:"))
+
+	e.result.Style = style
+	if style != "" {
+		e.result.Styles = append(e.result.Styles, style)
+		// Parse the MapCSS stylesheet
+		parsed, err := ParseMapCSS(style)
+		if err != nil {
+			// Store nil for unparseable styles, don't fail the expansion
+			e.result.ParsedStyles = append(e.result.ParsedStyles, nil)
+		} else {
+			e.result.ParsedStyles = append(e.result.ParsedStyles, parsed)
+		}
+	}
+
+	return "", nil
+}
+
+func (e *macroExpander) expandDataMacro(content string) (string, error) {
+	dataSrc, err := parseDataSource(strings.TrimPrefix(content, "data:"))
+	if err != nil {
+		return "", err
+	}
+
+	e.result.Data = dataSrc
+	if server, ok := dataSrc.Options["server"]; ok {
+		e.result.DataServer = server
+	}
+
+	if strings.EqualFold(dataSrc.Mode, "overpass") {
+		if server, ok := dataSrc.Options["server"]; ok {
+			e.result.EndpointOverride = normalizeEndpoint(server)
+		}
+	}
+
+	return "", nil
+}
+
+func (e *macroExpander) expandBBoxMacro() (string, error) {
+	if e.opts.BBox == nil {
+		return "", ErrMissingBBox
+	}
+
+	return formatBBox(*e.opts.BBox, e.format), nil
+}
+
+func (e *macroExpander) expandCenterMacro() (string, error) {
+	if e.opts.Center == nil {
+		return "", ErrMissingCenter
+	}
+
+	return formatCenter(*e.opts.Center, e.format), nil
 }
 
 // ApplyEndpointOverride returns the endpoint to use based on Result.EndpointOverride.
