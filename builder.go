@@ -174,34 +174,15 @@ func (qb *QueryBuilder) Build() string {
 		parts = append(parts, "(")
 	}
 
+	filterSuffix := qb.buildFilterString()
+	bboxSuffix := qb.buildBboxString()
+
 	for i, elemType := range elements {
 		if i > 0 {
 			parts = append(parts, " ")
 		}
 
-		query := elemType
-
-		// Add tag filters
-		for _, filter := range qb.filters {
-			switch filter.Operator {
-			case "=":
-				query += fmt.Sprintf(`["%s"="%s"]`, filter.Key, filter.Value)
-			case "!=":
-				query += fmt.Sprintf(`["%s"!="%s"]`, filter.Key, filter.Value)
-			case "~":
-				query += fmt.Sprintf(`["%s"~"%s"]`, filter.Key, filter.Value)
-			case "exists":
-				query += fmt.Sprintf(`["%s"]`, filter.Key)
-			}
-		}
-
-		// Add bounding box
-		if qb.bbox != nil {
-			query += fmt.Sprintf("(%.6f,%.6f,%.6f,%.6f)",
-				qb.bbox.South, qb.bbox.West, qb.bbox.North, qb.bbox.East)
-		}
-
-		query += ";"
+		query := elemType + filterSuffix + bboxSuffix + ";"
 		parts = append(parts, query)
 	}
 
@@ -218,6 +199,35 @@ func (qb *QueryBuilder) Build() string {
 // String implements Stringer interface.
 func (qb *QueryBuilder) String() string {
 	return qb.Build()
+}
+
+// buildFilterString creates the filter suffix for an element query.
+func (qb *QueryBuilder) buildFilterString() string {
+	var filters string
+	for _, filter := range qb.filters {
+		switch filter.Operator {
+		case "=":
+			filters += fmt.Sprintf(`["%s"="%s"]`, filter.Key, filter.Value)
+		case "!=":
+			filters += fmt.Sprintf(`["%s"!="%s"]`, filter.Key, filter.Value)
+		case "~":
+			filters += fmt.Sprintf(`["%s"~"%s"]`, filter.Key, filter.Value)
+		case "exists":
+			filters += fmt.Sprintf(`["%s"]`, filter.Key)
+		}
+	}
+
+	return filters
+}
+
+// buildBboxString creates the bounding box suffix if set.
+func (qb *QueryBuilder) buildBboxString() string {
+	if qb.bbox == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("(%.6f,%.6f,%.6f,%.6f)",
+		qb.bbox.South, qb.bbox.West, qb.bbox.North, qb.bbox.East)
 }
 
 // Helper functions for common queries

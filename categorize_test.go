@@ -4,280 +4,239 @@ import (
 	"testing"
 )
 
-func TestGetCategory(t *testing.T) {
-	t.Parallel()
+func testGetCategoryHelper(t *testing.T, tags map[string]string, expected Category) {
+	t.Helper()
 
-	testCases := []struct {
-		name     string
-		tags     map[string]string
-		expected Category
-	}{
-		{
-			"highway",
-			map[string]string{"highway": "primary"},
-			CategoryTransportation,
-		},
-		{
-			"railway",
-			map[string]string{"railway": "station"},
-			CategoryTransportation,
-		},
-		{
-			"aeroway",
-			map[string]string{"aeroway": "aerodrome"},
-			CategoryTransportation,
-		},
-		{
-			"amenity",
-			map[string]string{"amenity": "restaurant"},
-			CategoryAmenity,
-		},
-		{
-			"natural",
-			map[string]string{"natural": "tree"},
-			CategoryNatural,
-		},
-		{
-			"waterway",
-			map[string]string{"waterway": "river"},
-			CategoryWater,
-		},
-		{
-			"building",
-			map[string]string{"building": "yes"},
-			CategoryBuilding,
-		},
-		{
-			"leisure",
-			map[string]string{"leisure": "park"},
-			CategoryLeisure,
-		},
-		{
-			"landuse",
-			map[string]string{"landuse": "forest"},
-			CategoryLanduse,
-		},
-		{
-			"boundary",
-			map[string]string{"boundary": "administrative"},
-			CategoryBoundary,
-		},
-		{
-			"place",
-			map[string]string{"place": "city"},
-			CategoryPlace,
-		},
-		{
-			"shop",
-			map[string]string{"shop": "supermarket"},
-			CategoryShop,
-		},
-		{
-			"tourism",
-			map[string]string{"tourism": "hotel"},
-			CategoryTourism,
-		},
-		{
-			"unknown",
-			map[string]string{"foo": "bar"},
-			CategoryUnknown,
-		},
-		{
-			"priority: highway over building",
-			map[string]string{"highway": "residential", "building": "yes"},
-			CategoryTransportation,
-		},
-		{
-			"priority: highway over amenity",
-			map[string]string{"highway": "service", "amenity": "parking"},
-			CategoryTransportation,
-		},
-	}
+	meta := Meta{Tags: tags}
 
-	for _, testCase := range testCases {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			meta := Meta{Tags: testCase.tags}
-
-			got := meta.GetCategory()
-			if got != testCase.expected {
-				t.Errorf("expected %s, got %s", testCase.expected, got)
-			}
-		})
+	got := meta.GetCategory()
+	if got != expected {
+		t.Errorf("expected %s, got %s", expected, got)
 	}
 }
 
-func TestGetSubcategory(t *testing.T) {
+func TestGetCategory(t *testing.T) { //nolint:funlen // many test cases for comprehensive coverage
 	t.Parallel()
 
-	testCases := []struct {
-		name     string
-		tags     map[string]string
-		expected string
-	}{
-		{
-			"highway primary",
-			map[string]string{"highway": "primary"},
-			"primary",
-		},
-		{
-			"amenity restaurant",
-			map[string]string{"amenity": "restaurant"},
-			"restaurant",
-		},
-		{
-			"natural tree",
-			map[string]string{"natural": "tree"},
-			"tree",
-		},
-		{
-			"waterway river",
-			map[string]string{"waterway": "river"},
-			"river",
-		},
-		{
-			"building yes",
-			map[string]string{"building": "yes"},
-			"yes",
-		},
-		{
-			"leisure park",
-			map[string]string{"leisure": "park"},
-			"park",
-		},
-		{
-			"landuse forest",
-			map[string]string{"landuse": "forest"},
-			"forest",
-		},
-		{
-			"boundary administrative",
-			map[string]string{"boundary": "administrative"},
-			"administrative",
-		},
-		{
-			"place city",
-			map[string]string{"place": "city"},
-			"city",
-		},
-		{
-			"shop supermarket",
-			map[string]string{"shop": "supermarket"},
-			"supermarket",
-		},
-		{
-			"tourism hotel",
-			map[string]string{"tourism": "hotel"},
-			"hotel",
-		},
-		{
-			"unknown - empty",
-			map[string]string{"foo": "bar"},
-			"",
-		},
+	t.Run("highway", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"highway": "primary"}, CategoryTransportation)
+	})
+
+	t.Run("railway", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"railway": "station"}, CategoryTransportation)
+	})
+
+	t.Run("aeroway", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"aeroway": "aerodrome"}, CategoryTransportation)
+	})
+
+	t.Run("amenity", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"amenity": "restaurant"}, CategoryAmenity)
+	})
+
+	t.Run("natural", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"natural": "tree"}, CategoryNatural)
+	})
+
+	t.Run("waterway", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"waterway": "river"}, CategoryWater)
+	})
+
+	t.Run("building", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"building": "yes"}, CategoryBuilding)
+	})
+
+	t.Run("leisure", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"leisure": "park"}, CategoryLeisure)
+	})
+
+	t.Run("landuse", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"landuse": "forest"}, CategoryLanduse)
+	})
+
+	t.Run("boundary", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"boundary": "administrative"}, CategoryBoundary)
+	})
+
+	t.Run("place", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"place": "city"}, CategoryPlace)
+	})
+
+	t.Run("shop", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"shop": "supermarket"}, CategoryShop)
+	})
+
+	t.Run("tourism", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"tourism": "hotel"}, CategoryTourism)
+	})
+
+	t.Run("unknown", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"foo": "bar"}, CategoryUnknown)
+	})
+
+	t.Run("priority: highway over building", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"highway": "residential", "building": "yes"}, CategoryTransportation)
+	})
+
+	t.Run("priority: highway over amenity", func(t *testing.T) {
+		t.Parallel()
+		testGetCategoryHelper(t, map[string]string{"highway": "service", "amenity": "parking"}, CategoryTransportation)
+	})
+}
+
+func testGetSubcategoryHelper(t *testing.T, tags map[string]string, expected string) {
+	t.Helper()
+
+	meta := Meta{Tags: tags}
+
+	got := meta.GetSubcategory()
+	if got != expected {
+		t.Errorf("expected %s, got %s", expected, got)
 	}
+}
 
-	for _, testCase := range testCases {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+func TestGetSubcategory(t *testing.T) { //nolint:funlen // many test cases for comprehensive coverage
+	t.Parallel()
 
-			meta := Meta{Tags: testCase.tags}
+	t.Run("highway primary", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"highway": "primary"}, "primary")
+	})
 
-			got := meta.GetSubcategory()
-			if got != testCase.expected {
-				t.Errorf("expected %s, got %s", testCase.expected, got)
-			}
-		})
+	t.Run("amenity restaurant", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"amenity": "restaurant"}, "restaurant")
+	})
+
+	t.Run("natural tree", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"natural": "tree"}, "tree")
+	})
+
+	t.Run("waterway river", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"waterway": "river"}, "river")
+	})
+
+	t.Run("building yes", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"building": "yes"}, "yes")
+	})
+
+	t.Run("leisure park", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"leisure": "park"}, "park")
+	})
+
+	t.Run("landuse forest", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"landuse": "forest"}, "forest")
+	})
+
+	t.Run("boundary administrative", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"boundary": "administrative"}, "administrative")
+	})
+
+	t.Run("place city", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"place": "city"}, "city")
+	})
+
+	t.Run("shop supermarket", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"shop": "supermarket"}, "supermarket")
+	})
+
+	t.Run("tourism hotel", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"tourism": "hotel"}, "hotel")
+	})
+
+	t.Run("unknown - empty", func(t *testing.T) {
+		t.Parallel()
+		testGetSubcategoryHelper(t, map[string]string{"foo": "bar"}, "")
+	})
+}
+
+func testCategoryHelperMethod(t *testing.T, tags map[string]string, method func(*Meta) bool, expect bool) {
+	t.Helper()
+
+	meta := Meta{Tags: tags}
+
+	got := method(&meta)
+	if got != expect {
+		t.Errorf("expected %v, got %v", expect, got)
 	}
 }
 
 func TestCategoryHelpers(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		name   string
-		tags   map[string]string
-		method func(*Meta) bool
-		expect bool
-	}{
-		{
-			"IsTransportation - highway",
-			map[string]string{"highway": "primary"},
-			(*Meta).IsTransportation,
-			true,
-		},
-		{
-			"IsTransportation - not",
-			map[string]string{"amenity": "restaurant"},
-			(*Meta).IsTransportation,
-			false,
-		},
-		{
-			"IsAmenity - restaurant",
-			map[string]string{"amenity": "restaurant"},
-			(*Meta).IsAmenity,
-			true,
-		},
-		{
-			"IsAmenity - not",
-			map[string]string{"highway": "primary"},
-			(*Meta).IsAmenity,
-			false,
-		},
-		{
-			"IsNatural - tree",
-			map[string]string{"natural": "tree"},
-			(*Meta).IsNatural,
-			true,
-		},
-		{
-			"IsNatural - not",
-			map[string]string{"amenity": "restaurant"},
-			(*Meta).IsNatural,
-			false,
-		},
-		{
-			"IsWater - river",
-			map[string]string{"waterway": "river"},
-			(*Meta).IsWater,
-			true,
-		},
-		{
-			"IsWater - not",
-			map[string]string{"highway": "primary"},
-			(*Meta).IsWater,
-			false,
-		},
-		{
-			"IsBuilding - yes",
-			map[string]string{"building": "yes"},
-			(*Meta).IsBuilding,
-			true,
-		},
-		{
-			"IsBuilding - not",
-			map[string]string{"amenity": "restaurant"},
-			(*Meta).IsBuilding,
-			false,
-		},
-	}
+	t.Run("IsTransportation - highway", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"highway": "primary"}, (*Meta).IsTransportation, true)
+	})
 
-	for _, testCase := range testCases {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	t.Run("IsTransportation - not", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"amenity": "restaurant"}, (*Meta).IsTransportation, false)
+	})
 
-			meta := Meta{Tags: testCase.tags}
+	t.Run("IsAmenity - restaurant", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"amenity": "restaurant"}, (*Meta).IsAmenity, true)
+	})
 
-			got := testCase.method(&meta)
-			if got != testCase.expect {
-				t.Errorf("expected %v, got %v", testCase.expect, got)
-			}
-		})
-	}
+	t.Run("IsAmenity - not", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"highway": "primary"}, (*Meta).IsAmenity, false)
+	})
+
+	t.Run("IsNatural - tree", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"natural": "tree"}, (*Meta).IsNatural, true)
+	})
+
+	t.Run("IsNatural - not", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"amenity": "restaurant"}, (*Meta).IsNatural, false)
+	})
+
+	t.Run("IsWater - river", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"waterway": "river"}, (*Meta).IsWater, true)
+	})
+
+	t.Run("IsWater - not", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"highway": "primary"}, (*Meta).IsWater, false)
+	})
+
+	t.Run("IsBuilding - yes", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"building": "yes"}, (*Meta).IsBuilding, true)
+	})
+
+	t.Run("IsBuilding - not", func(t *testing.T) {
+		t.Parallel()
+		testCategoryHelperMethod(t, map[string]string{"amenity": "restaurant"}, (*Meta).IsBuilding, false)
+	})
 }
 
 func TestGetName(t *testing.T) {

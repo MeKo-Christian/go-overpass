@@ -18,120 +18,62 @@ const (
 	CategoryUnknown        Category = "unknown"
 )
 
+var tagToCategoryMap = map[string]Category{ //nolint:gochecknoglobals // lookup table for category detection
+	"highway":  CategoryTransportation,
+	"railway":  CategoryTransportation,
+	"aeroway":  CategoryTransportation,
+	"amenity":  CategoryAmenity,
+	"natural":  CategoryNatural,
+	"waterway": CategoryWater,
+	"building": CategoryBuilding,
+	"leisure":  CategoryLeisure,
+	"landuse":  CategoryLanduse,
+	"boundary": CategoryBoundary,
+	"place":    CategoryPlace,
+	"shop":     CategoryShop,
+	"tourism":  CategoryTourism,
+}
+
+var categoryPriorityOrder = []string{ //nolint:gochecknoglobals // defines priority order for category detection
+	"highway", "railway", "aeroway", "amenity", "natural", "waterway",
+	"building", "leisure", "landuse", "boundary", "place", "shop", "tourism",
+}
+
 // GetCategory returns high-level category based on OSM tags.
 func (m *Meta) GetCategory() Category {
-	// Check tags in priority order
-	if _, ok := m.Tags["highway"]; ok {
-		return CategoryTransportation
-	}
-
-	if _, ok := m.Tags["railway"]; ok {
-		return CategoryTransportation
-	}
-
-	if _, ok := m.Tags["aeroway"]; ok {
-		return CategoryTransportation
-	}
-
-	if _, ok := m.Tags["amenity"]; ok {
-		return CategoryAmenity
-	}
-
-	if _, ok := m.Tags["natural"]; ok {
-		return CategoryNatural
-	}
-
-	if _, ok := m.Tags["waterway"]; ok {
-		return CategoryWater
-	}
-
-	if _, ok := m.Tags["building"]; ok {
-		return CategoryBuilding
-	}
-
-	if _, ok := m.Tags["leisure"]; ok {
-		return CategoryLeisure
-	}
-
-	if _, ok := m.Tags["landuse"]; ok {
-		return CategoryLanduse
-	}
-
-	if _, ok := m.Tags["boundary"]; ok {
-		return CategoryBoundary
-	}
-
-	if _, ok := m.Tags["place"]; ok {
-		return CategoryPlace
-	}
-
-	if _, ok := m.Tags["shop"]; ok {
-		return CategoryShop
-	}
-
-	if _, ok := m.Tags["tourism"]; ok {
-		return CategoryTourism
+	for _, tag := range categoryPriorityOrder {
+		if _, ok := m.Tags[tag]; ok {
+			return tagToCategoryMap[tag]
+		}
 	}
 
 	return CategoryUnknown
+}
+
+// lookup table for subcategory detection
+//
+//nolint:gochecknoglobals
+var categoryToSubcategoryTags = map[Category][]string{
+	CategoryTransportation: {"highway", "railway", "aeroway"},
+	CategoryAmenity:        {"amenity"},
+	CategoryNatural:        {"natural"},
+	CategoryWater:          {"waterway"},
+	CategoryBuilding:       {"building"},
+	CategoryLeisure:        {"leisure"},
+	CategoryLanduse:        {"landuse"},
+	CategoryBoundary:       {"boundary"},
+	CategoryPlace:          {"place"},
+	CategoryShop:           {"shop"},
+	CategoryTourism:        {"tourism"},
 }
 
 // GetSubcategory returns detailed subcategory (tag value).
 func (m *Meta) GetSubcategory() string {
 	category := m.GetCategory()
 
-	switch category {
-	case CategoryTransportation:
-		if v, ok := m.Tags["highway"]; ok {
-			return v
-		}
-
-		if v, ok := m.Tags["railway"]; ok {
-			return v
-		}
-
-		if v, ok := m.Tags["aeroway"]; ok {
-			return v
-		}
-	case CategoryAmenity:
-		if v, ok := m.Tags["amenity"]; ok {
-			return v
-		}
-	case CategoryNatural:
-		if v, ok := m.Tags["natural"]; ok {
-			return v
-		}
-	case CategoryWater:
-		if v, ok := m.Tags["waterway"]; ok {
-			return v
-		}
-	case CategoryBuilding:
-		if v, ok := m.Tags["building"]; ok {
-			// "yes" is generic building, return as-is
-			return v
-		}
-	case CategoryLeisure:
-		if v, ok := m.Tags["leisure"]; ok {
-			return v
-		}
-	case CategoryLanduse:
-		if v, ok := m.Tags["landuse"]; ok {
-			return v
-		}
-	case CategoryBoundary:
-		if v, ok := m.Tags["boundary"]; ok {
-			return v
-		}
-	case CategoryPlace:
-		if v, ok := m.Tags["place"]; ok {
-			return v
-		}
-	case CategoryShop:
-		if v, ok := m.Tags["shop"]; ok {
-			return v
-		}
-	case CategoryTourism:
-		if v, ok := m.Tags["tourism"]; ok {
+	// Look for subcategory tags in the order defined for this category
+	for _, tag := range categoryToSubcategoryTags[category] {
+		if v, ok := m.Tags[tag]; ok {
 			return v
 		}
 	}

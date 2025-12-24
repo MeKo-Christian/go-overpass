@@ -26,6 +26,53 @@ type GeocodeResult struct {
 	Center  *Center
 }
 
+func expandGeocodeID(result GeocodeResult, format QueryFormat) (string, error) {
+	typeStr, ok := normalizeOSMType(result.OSMType)
+	if !ok || result.OSMID <= 0 {
+		return "", ErrGeocodeData
+	}
+
+	if format == FormatXML {
+		return fmt.Sprintf(`type="%s" ref="%d"`, typeStr, result.OSMID), nil
+	}
+
+	return fmt.Sprintf("%s(%d)", typeStr, result.OSMID), nil
+}
+
+func expandGeocodeArea(result GeocodeResult, format QueryFormat) (string, error) {
+	areaID := result.AreaID
+	if areaID == 0 {
+		var err error
+
+		areaID, err = deriveAreaID(result)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if format == FormatXML {
+		return fmt.Sprintf(`type="area" ref="%d"`, areaID), nil
+	}
+
+	return fmt.Sprintf("area(%d)", areaID), nil
+}
+
+func expandGeocodeBbox(result GeocodeResult, format QueryFormat) (string, error) {
+	if result.BBox == nil {
+		return "", ErrGeocodeData
+	}
+
+	return formatBBox(*result.BBox, format), nil
+}
+
+func expandGeocodeCoords(result GeocodeResult, format QueryFormat) (string, error) {
+	if result.Center == nil {
+		return "", ErrGeocodeData
+	}
+
+	return formatCenter(*result.Center, format), nil
+}
+
 func expandGeocode(content string, opts Options, format QueryFormat) (string, error) {
 	if opts.Geocoder == nil {
 		return "", ErrMissingGeocoder
@@ -43,44 +90,13 @@ func expandGeocode(content string, opts Options, format QueryFormat) (string, er
 
 	switch kind {
 	case "geocodeId":
-		typeStr, ok := normalizeOSMType(result.OSMType)
-		if !ok || result.OSMID <= 0 {
-			return "", ErrGeocodeData
-		}
-
-		if format == FormatXML {
-			return fmt.Sprintf(`type="%s" ref="%d"`, typeStr, result.OSMID), nil
-		}
-
-		return fmt.Sprintf("%s(%d)", typeStr, result.OSMID), nil
+		return expandGeocodeID(result, format)
 	case "geocodeArea":
-		areaID := result.AreaID
-		if areaID == 0 {
-			var err error
-
-			areaID, err = deriveAreaID(result)
-			if err != nil {
-				return "", err
-			}
-		}
-
-		if format == FormatXML {
-			return fmt.Sprintf(`type="area" ref="%d"`, areaID), nil
-		}
-
-		return fmt.Sprintf("area(%d)", areaID), nil
+		return expandGeocodeArea(result, format)
 	case "geocodeBbox":
-		if result.BBox == nil {
-			return "", ErrGeocodeData
-		}
-
-		return formatBBox(*result.BBox, format), nil
+		return expandGeocodeBbox(result, format)
 	case "geocodeCoords":
-		if result.Center == nil {
-			return "", ErrGeocodeData
-		}
-
-		return formatCenter(*result.Center, format), nil
+		return expandGeocodeCoords(result, format)
 	default:
 		return "", ErrBadMacro
 	}

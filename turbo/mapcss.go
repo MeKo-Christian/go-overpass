@@ -102,7 +102,13 @@ func (e *ParseError) Error() string {
 }
 
 // ErrInvalidHexColor is returned when an invalid hex color is encountered.
-var ErrInvalidHexColor = errors.New("invalid hex color")
+var (
+	ErrInvalidHexColor      = errors.New("invalid hex color")
+	ErrEndOfInput           = errors.New("end of input")
+	ErrInvalidSelectorStart = errors.New("invalid selector start")
+	ErrEmptySelector        = errors.New("empty selector")
+	ErrEmptyDeclaration     = errors.New("empty declaration")
+)
 
 // ParseMapCSS parses a MapCSS stylesheet string into a Stylesheet structure.
 func ParseMapCSS(input string) (*Stylesheet, error) {
@@ -225,6 +231,10 @@ func (p *parser) parseSelectors() ([]Selector, error) {
 	return selectors, nil
 }
 
+func (p *parser) shouldContinueParsing(ch byte) bool {
+	return ch != '{' && ch != ',' && isTypeStart(ch)
+}
+
 func (p *parser) parseSelector() (*Selector, error) {
 	p.skipWhitespaceAndComments()
 
@@ -232,34 +242,9 @@ func (p *parser) parseSelector() (*Selector, error) {
 		return nil, p.error("unexpected end of input")
 	}
 
-	var selectors []*Selector
-
-	for {
-		sel, err := p.parseSingleSelector()
-		if err != nil {
-			return nil, err
-		}
-
-		if sel == nil {
-			break
-		}
-
-		selectors = append(selectors, sel)
-
-		p.skipWhitespaceAndComments()
-		// Check for descendant selector (space before next type)
-		if p.pos < len(p.input) {
-			ch := p.peek()
-			if ch == '{' || ch == ',' {
-				break
-			}
-			// If next char is a type start, it's a descendant
-			if isTypeStart(ch) {
-				continue
-			}
-		}
-
-		break
+	selectors, err := p.parseSelectorChain()
+	if err != nil {
+		return nil, err
 	}
 
 	if len(selectors) == 0 {
@@ -275,29 +260,58 @@ func (p *parser) parseSelector() (*Selector, error) {
 	return result, nil
 }
 
-func (p *parser) parseSingleSelector() (*Selector, error) {
+func (p *parser) parseSelectorChain() ([]*Selector, error) {
+	var selectors []*Selector
+
+	for {
+		sel, err := p.parseSingleSelector()
+		if err != nil {
+			// End of input, invalid selector start, or empty selector are normal loop termination conditions
+			if errors.Is(err, ErrEndOfInput) || errors.Is(err, ErrInvalidSelectorStart) || errors.Is(err, ErrEmptySelector) {
+				break
+			}
+
+			return nil, err
+		}
+
+		selectors = append(selectors, sel)
+
+		p.skipWhitespaceAndComments()
+		// Check for descendant selector (space before next type)
+		if p.pos < len(p.input) && p.shouldContinueParsing(p.peek()) {
+			continue
+		}
+
+		break
+	}
+
+	return selectors, nil
+}
+
+func (p *parser) parseSingleSelector() (*Selector, error) { //nolint:gocognit // complex selector parsing logic
 	p.skipWhitespaceAndComments()
 
 	if p.pos >= len(p.input) {
-		return nil, nil
+		return nil, ErrEndOfInput
 	}
 
 	char := p.peek()
 	if char == '{' || char == ',' {
-		return nil, nil
+		return nil, ErrInvalidSelectorStart
 	}
 
 	sel := &Selector{}
 
 	// Parse type (node, way, relation, area, line, canvas, meta, *)
-	if char == '*' {
+	switch {
+	case char == '*':
 		sel.Type = "*"
 
 		p.advance()
-	} else if isLetter(char) {
+	case isLetter(char):
 		sel.Type = p.parseIdent()
-	} else if char != '[' && char != ':' && char != '.' && char != '|' {
-		return nil, nil
+	case char != '[' && char != ':' && char != '.' && char != '|':
+		return nil, ErrInvalidSelectorStart
 	}
 
 	// Parse layer (::name)
@@ -343,39 +357,60 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 	}
 
 	// Parse conditions [key=value], pseudo-classes :hover, and classes .name
+loop:
 	for p.pos < len(p.input) {
 		char := p.peek()
-		if char == '[' {
+		switch {
+		case char == '[':
 			cond, err := p.parseCondition()
 			if err != nil {
 				return nil, err
 			}
 
 			sel.Conditions = append(sel.Conditions, *cond)
-		} else if char == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':') {
+		case char == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':'):
 			p.advance()
 
 			pseudo := p.parseIdent()
 			if pseudo != "" {
 				sel.PseudoClasses = append(sel.PseudoClasses, pseudo)
 			}
-		} else if char == '.' {
+		case char == '.':
 			p.advance()
 
 			class := p.parseIdent()
 			if class != "" {
 				sel.Classes = append(sel.Classes, class)
 			}
-		} else {
-			break
+		default:
+			break loop
 		}
 	}
 
 	if sel.Type == "" && len(sel.Conditions) == 0 && len(sel.PseudoClasses) == 0 && len(sel.Classes) == 0 {
-		return nil, nil
+		return nil, ErrEmptySelector
 	}
 
 	return sel, nil
+}
+
+func (p *parser) compileConditionRegex(operator, value string) (*regexp.Regexp, error) {
+	if operator != "=~" && operator != "!~" {
+		return nil, nil //nolint:nilnil // not an error condition, regex only used for =~ and !~
+	}
+
+	pattern := value
+	// Remove surrounding slashes if present
+	if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+		pattern = pattern[1 : len(pattern)-1]
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, p.error(fmt.Sprintf("invalid regex: %s", err))
+	}
+
+	return re, nil
 }
 
 func (p *parser) parseCondition() (*Condition, error) {
@@ -412,20 +447,12 @@ func (p *parser) parseCondition() (*Condition, error) {
 			cond.Value = p.parseValueString()
 
 			// Compile regex for =~ operator
-			if operator == "=~" || operator == "!~" {
-				// Remove surrounding slashes if present
-				pattern := cond.Value
-				if strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
-					pattern = pattern[1 : len(pattern)-1]
-				}
-
-				re, err := regexp.Compile(pattern)
-				if err != nil {
-					return nil, p.error(fmt.Sprintf("invalid regex: %s", err))
-				}
-
-				cond.Regex = re
+			re, err := p.compileConditionRegex(operator, cond.Value)
+			if err != nil {
+				return nil, err
 			}
+
+			cond.Regex = re
 		}
 	}
 
@@ -452,52 +479,28 @@ func (p *parser) parseDeclarations() ([]Declaration, error) {
 
 		decl, err := p.parseDeclaration()
 		if err != nil {
+			// Empty declaration is a normal skip condition
+			if errors.Is(err, ErrEmptyDeclaration) {
+				continue
+			}
+
 			return nil, err
 		}
 
-		if decl != nil {
-			decls = append(decls, *decl)
-		}
+		decls = append(decls, *decl)
 	}
 
 	return decls, nil
 }
 
-func (p *parser) parseDeclaration() (*Declaration, error) {
-	p.skipWhitespaceAndComments()
+func (p *parser) parseSetDeclaration() (*Declaration, error) {
+	p.pos += 3 // skip "set"
+	p.skipWhitespace()
 
-	// Handle 'set' directive
-	if p.pos+3 < len(p.input) && p.input[p.pos:p.pos+3] == "set" {
-		p.pos += 3
-		p.skipWhitespace()
-
-		if p.pos < len(p.input) && p.peek() == '.' {
-			p.advance()
-			className := p.parseIdent()
-			p.skipWhitespace()
-
-			if p.pos < len(p.input) && p.peek() == ';' {
-				p.advance()
-			}
-
-			return &Declaration{
-				Property: "set-class",
-				Value:    Value{Raw: className, Type: ValueTypeString},
-			}, nil
-		}
-
-		// set tag=value or set tag
-		tagName := p.parseIdent()
-		p.skipWhitespace()
-
-		value := "yes"
-
-		if p.pos < len(p.input) && p.peek() == '=' {
-			p.advance()
-			p.skipWhitespace()
-			value = p.parseValueString()
-		}
-
+	// set .className
+	if p.pos < len(p.input) && p.peek() == '.' {
+		p.advance()
+		className := p.parseIdent()
 		p.skipWhitespace()
 
 		if p.pos < len(p.input) && p.peek() == ';' {
@@ -505,15 +508,47 @@ func (p *parser) parseDeclaration() (*Declaration, error) {
 		}
 
 		return &Declaration{
-			Property: "set-tag:" + tagName,
-			Value:    Value{Raw: value, Type: ValueTypeString},
+			Property: "set-class",
+			Value:    Value{Raw: className, Type: ValueTypeString},
 		}, nil
+	}
+
+	// set tag=value or set tag
+	tagName := p.parseIdent()
+	p.skipWhitespace()
+
+	value := "yes"
+
+	if p.pos < len(p.input) && p.peek() == '=' {
+		p.advance()
+		p.skipWhitespace()
+		value = p.parseValueString()
+	}
+
+	p.skipWhitespace()
+
+	if p.pos < len(p.input) && p.peek() == ';' {
+		p.advance()
+	}
+
+	return &Declaration{
+		Property: "set-tag:" + tagName,
+		Value:    Value{Raw: value, Type: ValueTypeString},
+	}, nil
+}
+
+func (p *parser) parseDeclaration() (*Declaration, error) {
+	p.skipWhitespaceAndComments()
+
+	// Handle 'set' directive
+	if p.pos+3 < len(p.input) && p.input[p.pos:p.pos+3] == "set" {
+		return p.parseSetDeclaration()
 	}
 
 	// Parse property name
 	prop := p.parseIdent()
 	if prop == "" {
-		return nil, nil
+		return nil, ErrEmptyDeclaration
 	}
 
 	p.skipWhitespace()
@@ -543,49 +578,96 @@ func (p *parser) parseDeclaration() (*Declaration, error) {
 	}, nil
 }
 
-func (p *parser) parseValue() (*Value, error) {
+func (p *parser) parseURLValue() (*Value, error) {
+	p.pos += 4 // skip "url("
+	content := p.parseUntilClosingParen()
+
+	url := strings.Trim(content, `'"`)
+
+	return &Value{
+		Raw:  "url(" + content + ")",
+		Type: ValueTypeURL,
+		URL:  url,
+	}, nil
+}
+
+func (p *parser) parseEvalValue() (*Value, error) {
+	p.pos += 5 // skip "eval("
+	content := p.parseUntilClosingParen()
+
+	expr := strings.Trim(content, `'"`)
+
+	return &Value{
+		Raw:  "eval(" + content + ")",
+		Type: ValueTypeEval,
+		Eval: expr,
+	}, nil
+}
+
+func (p *parser) determineValueType(rawStr string) *Value {
+	val := &Value{Raw: rawStr}
+
+	// Try to determine type
+	if color := parseNamedColor(rawStr); color != nil {
+		val.Type = ValueTypeColor
+		val.Color = color
+
+		return val
+	}
+
+	num, err := strconv.ParseFloat(rawStr, 64)
+	if err == nil {
+		val.Type = ValueTypeNumber
+		val.Number = num
+
+		return val
+	}
+
+	if strings.Contains(rawStr, ",") && !strings.ContainsAny(rawStr, "()") {
+		// Might be dashes pattern
+		parts := strings.Split(rawStr, ",")
+		var dashes []float64
+		allNumeric := true
+
+		for _, part := range parts {
+			num, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
+			if err != nil {
+				allNumeric = false
+				break
+			}
+
+			dashes = append(dashes, num)
+		}
+
+		if allNumeric {
+			val.Type = ValueTypeDashes
+			val.Dashes = dashes
+
+			return val
+		}
+	}
+
+	val.Type = ValueTypeKeyword
+
+	return val
+}
+
+func (p *parser) parseValue() (*Value, error) { //nolint:cyclop // multiple value type checks needed
 	p.skipWhitespace()
 
 	if p.pos >= len(p.input) {
 		return &Value{}, nil
 	}
 
-	var raw strings.Builder
 	startPos := p.pos
 
 	// Check for special functions
 	if p.pos+4 < len(p.input) && p.input[p.pos:p.pos+4] == "url(" {
-		p.pos += 4
-		content := p.parseUntilClosingParen()
-
-		raw.WriteString("url(")
-		raw.WriteString(content)
-		raw.WriteString(")")
-
-		url := strings.Trim(content, `'"`)
-
-		return &Value{
-			Raw:  raw.String(),
-			Type: ValueTypeURL,
-			URL:  url,
-		}, nil
+		return p.parseURLValue()
 	}
 
 	if p.pos+5 < len(p.input) && p.input[p.pos:p.pos+5] == "eval(" {
-		p.pos += 5
-		content := p.parseUntilClosingParen()
-
-		raw.WriteString("eval(")
-		raw.WriteString(content)
-		raw.WriteString(")")
-
-		expr := strings.Trim(content, `'"`)
-
-		return &Value{
-			Raw:  raw.String(),
-			Type: ValueTypeEval,
-			Eval: expr,
-		}, nil
+		return p.parseEvalValue()
 	}
 
 	if p.pos+4 < len(p.input) && p.input[p.pos:p.pos+4] == "rgb(" {
@@ -602,6 +684,8 @@ func (p *parser) parseValue() (*Value, error) {
 	}
 
 	// Collect until ; or }
+	var raw strings.Builder
+
 	for p.pos < len(p.input) {
 		ch := p.peek()
 		if ch == ';' || ch == '}' {
@@ -613,43 +697,7 @@ func (p *parser) parseValue() (*Value, error) {
 	}
 
 	rawStr := strings.TrimSpace(raw.String())
-	val := &Value{Raw: rawStr}
-
-	// Try to determine type
-	if color := parseNamedColor(rawStr); color != nil {
-		val.Type = ValueTypeColor
-		val.Color = color
-	} else {
-		num, err := strconv.ParseFloat(rawStr, 64)
-		if err == nil {
-			val.Type = ValueTypeNumber
-			val.Number = num
-		} else if strings.Contains(rawStr, ",") && !strings.ContainsAny(rawStr, "()") {
-			// Might be dashes pattern
-			parts := strings.Split(rawStr, ",")
-			var dashes []float64
-			allNumeric := true
-
-			for _, part := range parts {
-				num, err := strconv.ParseFloat(strings.TrimSpace(part), 64)
-				if err != nil {
-					allNumeric = false
-					break
-				}
-
-				dashes = append(dashes, num)
-			}
-
-			if allNumeric {
-				val.Type = ValueTypeDashes
-				val.Dashes = dashes
-			} else {
-				val.Type = ValueTypeKeyword
-			}
-		} else {
-			val.Type = ValueTypeKeyword
-		}
-	}
+	val := p.determineValueType(rawStr)
 
 	// Restore pos if we didn't consume anything
 	if p.pos == startPos {
@@ -813,16 +861,18 @@ func (p *parser) parseQuotedString() string {
 
 	var buf strings.Builder
 
+loop2:
 	for p.pos < len(p.input) {
 		char := p.peek()
-		if char == '\\' && p.pos+1 < len(p.input) {
+		switch {
+		case char == '\\' && p.pos+1 < len(p.input):
 			p.advance()
 			buf.WriteByte(p.peek())
 			p.advance()
-		} else if char == quote {
+		case char == quote:
 			p.advance()
-			break
-		} else {
+			break loop2
+		default:
 			buf.WriteByte(char)
 			p.advance()
 		}
@@ -873,19 +923,21 @@ func (p *parser) parseRegex() string {
 	var buf strings.Builder
 	buf.WriteByte('/')
 
+loop3:
 	for p.pos < len(p.input) {
 		char := p.peek()
-		if char == '\\' && p.pos+1 < len(p.input) {
+		switch {
+		case char == '\\' && p.pos+1 < len(p.input):
 			buf.WriteByte(char)
 			p.advance()
 			buf.WriteByte(p.peek())
 			p.advance()
-		} else if char == '/' {
+		case char == '/':
 			buf.WriteByte(char)
 			p.advance()
 
-			break
-		} else {
+			break loop3
+		default:
 			buf.WriteByte(char)
 			p.advance()
 		}
@@ -926,6 +978,26 @@ func (p *parser) skipWhitespace() {
 	}
 }
 
+func (p *parser) skipBlockComment() {
+	// Skip /* ... */
+	p.pos += 2 // skip /*
+	for p.pos+1 < len(p.input) {
+		if p.input[p.pos] == '*' && p.input[p.pos+1] == '/' {
+			p.pos += 2
+			break
+		}
+
+		p.advance()
+	}
+}
+
+func (p *parser) skipLineComment() {
+	// Skip // ... to end of line
+	for p.pos < len(p.input) && p.peek() != '\n' {
+		p.advance()
+	}
+}
+
 func (p *parser) skipWhitespaceAndComments() {
 	for p.pos < len(p.input) {
 		char := p.peek()
@@ -933,27 +1005,19 @@ func (p *parser) skipWhitespaceAndComments() {
 			p.advance()
 			continue
 		}
-		// C-style comment
-		if char == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '*' {
-			p.pos += 2
-			for p.pos+1 < len(p.input) {
-				if p.input[p.pos] == '*' && p.input[p.pos+1] == '/' {
-					p.pos += 2
-					break
-				}
 
-				p.advance()
+		// Check for comments
+		if char == '/' && p.pos+1 < len(p.input) {
+			nextChar := p.input[p.pos+1]
+			if nextChar == '*' {
+				p.skipBlockComment()
+				continue
 			}
 
-			continue
-		}
-		// Line comment
-		if char == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '/' {
-			for p.pos < len(p.input) && p.peek() != '\n' {
-				p.advance()
+			if nextChar == '/' {
+				p.skipLineComment()
+				continue
 			}
-
-			continue
 		}
 
 		break

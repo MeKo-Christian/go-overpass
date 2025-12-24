@@ -98,7 +98,7 @@ var (
 //   - {{style:...}} and {{data:...}} are removed from output and returned in Result
 //
 // Unsupported geocode macros return an error for now.
-func Expand(query string, opts Options) (Result, error) {
+func Expand(query string, opts Options) (Result, error) { //nolint:gocognit // complex macro expansion logic
 	format := detectFormat(query, opts.Format)
 
 	shortcuts := map[string]string{}
@@ -371,6 +371,27 @@ func parseDataSource(raw string) (*DataSource, error) {
 	}, nil
 }
 
+func applyDateOffset(base time.Time, value int, unit string) time.Time {
+	switch unit {
+	case unitSecond:
+		return base.Add(-time.Duration(value) * time.Second)
+	case unitMinute:
+		return base.Add(-time.Duration(value) * time.Minute)
+	case unitHour:
+		return base.Add(-time.Duration(value) * time.Hour)
+	case unitDay:
+		return base.Add(-time.Duration(value) * 24 * time.Hour)
+	case unitWeek:
+		return base.Add(-time.Duration(value) * 7 * 24 * time.Hour)
+	case unitMonth:
+		return base.AddDate(0, -value, 0)
+	case unitYear:
+		return base.AddDate(-value, 0, 0)
+	}
+
+	return base
+}
+
 func expandDate(content string, now time.Time) (string, error) {
 	if now.IsZero() {
 		now = time.Now().UTC()
@@ -397,26 +418,32 @@ func expandDate(content string, now time.Time) (string, error) {
 		return "", err
 	}
 
-	switch unit {
-	case unitSecond:
-		now = now.Add(-time.Duration(value) * time.Second)
-	case unitMinute:
-		now = now.Add(-time.Duration(value) * time.Minute)
-	case unitHour:
-		now = now.Add(-time.Duration(value) * time.Hour)
-	case unitDay:
-		now = now.Add(-time.Duration(value) * 24 * time.Hour)
-	case unitWeek:
-		now = now.Add(-time.Duration(value) * 7 * 24 * time.Hour)
-	case unitMonth:
-		now = now.AddDate(0, -value, 0)
-	case unitYear:
-		now = now.AddDate(-value, 0, 0)
-	default:
+	if !isValidUnit(unit) {
 		return "", ErrBadMacro
 	}
 
+	now = applyDateOffset(now, value, unit)
+
 	return now.Format(time.RFC3339Nano), nil
+}
+
+func isValidUnit(unit string) bool {
+	switch unit {
+	case unitSecond, unitMinute, unitHour, unitDay, unitWeek, unitMonth, unitYear:
+		return true
+	default:
+		return false
+	}
+}
+
+var unitMap = map[string]string{ //nolint:gochecknoglobals // lookup table for unit parsing
+	"second": unitSecond, "seconds": unitSecond,
+	"minute": unitMinute, "minutes": unitMinute,
+	"hour": unitHour, "hours": unitHour,
+	"day": unitDay, "days": unitDay,
+	"week": unitWeek, "weeks": unitWeek,
+	"month": unitMonth, "months": unitMonth,
+	"year": unitYear, "years": unitYear,
 }
 
 func parseRelativeDuration(raw string) (int, string, error) {
@@ -430,25 +457,12 @@ func parseRelativeDuration(raw string) (int, string, error) {
 		return 0, "", ErrBadMacro
 	}
 
-	unit := strings.ToLower(fields[1])
-	switch unit {
-	case "second", "seconds":
-		return value, unitSecond, nil
-	case "minute", "minutes":
-		return value, unitMinute, nil
-	case "hour", "hours":
-		return value, unitHour, nil
-	case "day", "days":
-		return value, unitDay, nil
-	case "week", "weeks":
-		return value, unitWeek, nil
-	case "month", "months":
-		return value, unitMonth, nil
-	case "year", "years":
-		return value, unitYear, nil
-	default:
+	unit, ok := unitMap[strings.ToLower(fields[1])]
+	if !ok {
 		return 0, "", ErrBadMacro
 	}
+
+	return value, unit, nil
 }
 
 func scanMacros(query string, callback func(start int, end int, content string) error) error {

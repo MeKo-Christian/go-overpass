@@ -93,7 +93,7 @@ func (c *Client) httpPost(ctx context.Context, query string) ([]byte, error) {
 	return body, nil
 }
 
-func unmarshal(body []byte) (Result, error) {
+func unmarshal(body []byte) (Result, error) { //nolint:gocognit // complex unmarshaling logic
 	var overpassRes overpassResponse
 
 	err := json.Unmarshal(body, &overpassRes)

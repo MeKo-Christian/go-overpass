@@ -59,6 +59,16 @@ text = 'TestPackageLevelQueryContext|TestPackageLevelQuery'
 linters = ['testpackage']
 path = '.*_test\.go'
 
+# Exclude legitimate global variables (public API)
+[[linters.exclusions.rules]]
+linters = ['gochecknoglobals']
+text = 'DefaultClient is a global variable'
+
+# Exclude legitimate global variables (static lookup table)
+[[linters.exclusions.rules]]
+linters = ['gochecknoglobals']
+text = 'namedColors is a global variable'
+
 [severity]
 default = 'warn'
 

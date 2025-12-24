@@ -4,177 +4,132 @@ import (
 	"testing"
 )
 
+func testParseMapCSSBasicSelectorHelper(t *testing.T, input, wantType string) {
+	t.Helper()
+
+	stylesheet, err := ParseMapCSS(input)
+	if err != nil {
+		t.Fatalf("ParseMapCSS() error = %v", err)
+	}
+
+	if len(stylesheet.Rules) != 1 {
+		t.Errorf("got %d rules, want 1", len(stylesheet.Rules))
+	}
+
+	if len(stylesheet.Rules) > 0 && len(stylesheet.Rules[0].Selectors) > 0 {
+		if stylesheet.Rules[0].Selectors[0].Type != wantType {
+			t.Errorf("got type %q, want %q", stylesheet.Rules[0].Selectors[0].Type, wantType)
+		}
+	}
+}
+
 func TestParseMapCSSBasicSelector(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		input    string
-		wantType string
-		wantLen  int
-	}{
-		{
-			name:     "node selector",
-			input:    "node { color: red; }",
-			wantType: "node",
-			wantLen:  1,
-		},
-		{
-			name:     "way selector",
-			input:    "way { color: blue; }",
-			wantType: "way",
-			wantLen:  1,
-		},
-		{
-			name:     "relation selector",
-			input:    "relation { color: green; }",
-			wantType: "relation",
-			wantLen:  1,
-		},
-		{
-			name:     "area selector",
-			input:    "area { fill-color: yellow; }",
-			wantType: "area",
-			wantLen:  1,
-		},
-		{
-			name:     "line selector",
-			input:    "line { width: 2; }",
-			wantType: "line",
-			wantLen:  1,
-		},
-		{
-			name:     "wildcard selector",
-			input:    "* { opacity: 0.5; }",
-			wantType: "*",
-			wantLen:  1,
-		},
+	t.Run("node selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "node { color: red; }", "node")
+	})
+
+	t.Run("way selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "way { color: blue; }", "way")
+	})
+
+	t.Run("relation selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "relation { color: green; }", "relation")
+	})
+
+	t.Run("area selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "area { fill-color: yellow; }", "area")
+	})
+
+	t.Run("line selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "line { width: 2; }", "line")
+	})
+
+	t.Run("wildcard selector", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSBasicSelectorHelper(t, "* { opacity: 0.5; }", "*")
+	})
+}
+
+func testParseMapCSSConditionHelper(t *testing.T, input, wantKey, wantOp, wantVal string) {
+	t.Helper()
+
+	stylesheet, err := ParseMapCSS(input)
+	if err != nil {
+		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	for _, testCase := range tests {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
+		t.Fatal("expected at least one rule with one selector")
+	}
 
-			stylesheet, err := ParseMapCSS(testCase.input)
-			if err != nil {
-				t.Fatalf("ParseMapCSS() error = %v", err)
-			}
+	sel := stylesheet.Rules[0].Selectors[0]
+	if len(sel.Conditions) == 0 {
+		t.Fatal("expected at least one condition")
+	}
 
-			if len(stylesheet.Rules) != testCase.wantLen {
-				t.Errorf("got %d rules, want %d", len(stylesheet.Rules), testCase.wantLen)
-			}
+	cond := sel.Conditions[0]
+	if cond.Key != wantKey {
+		t.Errorf("got key %q, want %q", cond.Key, wantKey)
+	}
 
-			if len(stylesheet.Rules) > 0 && len(stylesheet.Rules[0].Selectors) > 0 {
-				if stylesheet.Rules[0].Selectors[0].Type != testCase.wantType {
-					t.Errorf("got type %q, want %q", stylesheet.Rules[0].Selectors[0].Type, testCase.wantType)
-				}
-			}
-		})
+	if cond.Operator != wantOp {
+		t.Errorf("got operator %q, want %q", cond.Operator, wantOp)
+	}
+
+	if cond.Value != wantVal {
+		t.Errorf("got value %q, want %q", cond.Value, wantVal)
 	}
 }
 
 func TestParseMapCSSConditions(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   string
-		wantKey string
-		wantOp  string
-		wantVal string
-	}{
-		{
-			name:    "equals",
-			input:   "way[highway=primary] { color: red; }",
-			wantKey: "highway",
-			wantOp:  "=",
-			wantVal: "primary",
-		},
-		{
-			name:    "not equals",
-			input:   "way[highway!=motorway] { color: blue; }",
-			wantKey: "highway",
-			wantOp:  "!=",
-			wantVal: "motorway",
-		},
-		{
-			name:    "exists",
-			input:   "way[name] { color: green; }",
-			wantKey: "name",
-			wantOp:  "",
-			wantVal: "",
-		},
-		{
-			name:    "not exists",
-			input:   "way[!name] { color: gray; }",
-			wantKey: "name",
-			wantOp:  "!",
-			wantVal: "",
-		},
-		{
-			name:    "regex match",
-			input:   `way[highway=~/.*ary/] { color: purple; }`,
-			wantKey: "highway",
-			wantOp:  "=~",
-			wantVal: "/.*ary/",
-		},
-		{
-			name:    "less than",
-			input:   "node[population<1000] { color: yellow; }",
-			wantKey: "population",
-			wantOp:  "<",
-			wantVal: "1000",
-		},
-		{
-			name:    "greater than or equal",
-			input:   "node[population>=1000000] { color: orange; }",
-			wantKey: "population",
-			wantOp:  ">=",
-			wantVal: "1000000",
-		},
-		{
-			name:    "meta attribute",
-			input:   "way[@id=171784106] { color: cyan; }",
-			wantKey: "@id",
-			wantOp:  "=",
-			wantVal: "171784106",
-		},
-	}
+	t.Run("equals", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "way[highway=primary] { color: red; }", "highway", "=", "primary")
+	})
 
-	for _, testCase := range tests {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	t.Run("not equals", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "way[highway!=motorway] { color: blue; }", "highway", "!=", "motorway")
+	})
 
-			stylesheet, err := ParseMapCSS(testCase.input)
-			if err != nil {
-				t.Fatalf("ParseMapCSS() error = %v", err)
-			}
+	t.Run("exists", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "way[name] { color: green; }", "name", "", "")
+	})
 
-			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
-				t.Fatal("expected at least one rule with one selector")
-			}
+	t.Run("not exists", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "way[!name] { color: gray; }", "name", "!", "")
+	})
 
-			sel := stylesheet.Rules[0].Selectors[0]
-			if len(sel.Conditions) == 0 {
-				t.Fatal("expected at least one condition")
-			}
+	t.Run("regex match", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, `way[highway=~/.*ary/] { color: purple; }`, "highway", "=~", "/.*ary/")
+	})
 
-			cond := sel.Conditions[0]
-			if cond.Key != testCase.wantKey {
-				t.Errorf("got key %q, want %q", cond.Key, testCase.wantKey)
-			}
+	t.Run("less than", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "node[population<1000] { color: yellow; }", "population", "<", "1000")
+	})
 
-			if cond.Operator != testCase.wantOp {
-				t.Errorf("got operator %q, want %q", cond.Operator, testCase.wantOp)
-			}
+	t.Run("greater than or equal", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "node[population>=1000000] { color: orange; }", "population", ">=", "1000000")
+	})
 
-			if cond.Value != testCase.wantVal {
-				t.Errorf("got value %q, want %q", cond.Value, testCase.wantVal)
-			}
-		})
-	}
+	t.Run("meta attribute", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSConditionHelper(t, "way[@id=171784106] { color: cyan; }", "@id", "=", "171784106")
+	})
 }
 
 func TestParseMapCSSColors(t *testing.T) {
@@ -297,76 +252,55 @@ func TestParseMapCSSColors(t *testing.T) {
 	}
 }
 
+func testParseMapCSSDeclarationHelper(t *testing.T, input, wantProp string, wantType ValueType) {
+	t.Helper()
+
+	stylesheet, err := ParseMapCSS(input)
+	if err != nil {
+		t.Fatalf("ParseMapCSS() error = %v", err)
+	}
+
+	if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Declarations) == 0 {
+		t.Fatal("expected at least one rule with one declaration")
+	}
+
+	decl := stylesheet.Rules[0].Declarations[0]
+	if decl.Property != wantProp {
+		t.Errorf("got property %q, want %q", decl.Property, wantProp)
+	}
+
+	if decl.Value.Type != wantType {
+		t.Errorf("got type %v, want %v", decl.Value.Type, wantType)
+	}
+}
+
 func TestParseMapCSSDeclarations(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		input    string
-		wantProp string
-		wantType ValueType
-		wantRaw  string
-	}{
-		{
-			name:     "number value",
-			input:    "way { width: 5; }",
-			wantProp: "width",
-			wantType: ValueTypeNumber,
-			wantRaw:  "5",
-		},
-		{
-			name:     "url value",
-			input:    "node { icon-image: url('icons/maki/cafe-18.png'); }",
-			wantProp: "icon-image",
-			wantType: ValueTypeURL,
-			wantRaw:  "url(icons/maki/cafe-18.png)",
-		},
-		{
-			name:     "dashes value",
-			input:    "way { dashes: 5, 8; }",
-			wantProp: "dashes",
-			wantType: ValueTypeDashes,
-			wantRaw:  "5, 8",
-		},
-		{
-			name:     "keyword value",
-			input:    "way { linecap: round; }",
-			wantProp: "linecap",
-			wantType: ValueTypeKeyword,
-			wantRaw:  "round",
-		},
-		{
-			name:     "eval value",
-			input:    `node { opacity: eval("tag('population')/100000"); }`,
-			wantProp: "opacity",
-			wantType: ValueTypeEval,
-		},
-	}
+	t.Run("number value", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSDeclarationHelper(t, "way { width: 5; }", "width", ValueTypeNumber)
+	})
 
-	for _, testCase := range tests {
-		testCase := testCase // capture range variable
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	t.Run("url value", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSDeclarationHelper(t, "node { icon-image: url('icons/maki/cafe-18.png'); }", "icon-image", ValueTypeURL)
+	})
 
-			stylesheet, err := ParseMapCSS(testCase.input)
-			if err != nil {
-				t.Fatalf("ParseMapCSS() error = %v", err)
-			}
+	t.Run("dashes value", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSDeclarationHelper(t, "way { dashes: 5, 8; }", "dashes", ValueTypeDashes)
+	})
 
-			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Declarations) == 0 {
-				t.Fatal("expected at least one rule with one declaration")
-			}
+	t.Run("keyword value", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSDeclarationHelper(t, "way { linecap: round; }", "linecap", ValueTypeKeyword)
+	})
 
-			decl := stylesheet.Rules[0].Declarations[0]
-			if decl.Property != testCase.wantProp {
-				t.Errorf("got property %q, want %q", decl.Property, testCase.wantProp)
-			}
-
-			if decl.Value.Type != testCase.wantType {
-				t.Errorf("got type %v, want %v", decl.Value.Type, testCase.wantType)
-			}
-		})
-	}
+	t.Run("eval value", func(t *testing.T) {
+		t.Parallel()
+		testParseMapCSSDeclarationHelper(t, `node { opacity: eval("tag('population')/100000"); }`, "opacity", ValueTypeEval)
+	})
 }
 
 func TestParseMapCSSMultipleSelectors(t *testing.T) {
