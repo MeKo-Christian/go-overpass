@@ -91,14 +91,14 @@ func TestCalculateBackoff(t *testing.T) {
 		{5, 10 * time.Second}, // still capped
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(fmt.Sprintf("attempt_%d", tc.attempt), func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(fmt.Sprintf("attempt_%d", testCase.attempt), func(t *testing.T) {
 			t.Parallel()
 
-			got := calculateBackoff(tc.attempt, config)
-			if got != tc.expected {
-				t.Errorf("attempt %d: expected %v, got %v", tc.attempt, tc.expected, got)
+			got := calculateBackoff(testCase.attempt, config)
+			if got != testCase.expected {
+				t.Errorf("attempt %d: expected %v, got %v", testCase.attempt, testCase.expected, got)
 			}
 		})
 	}
@@ -127,7 +127,7 @@ type failingMockClient struct {
 	statusCode  int
 }
 
-func (m *failingMockClient) Do(req *http.Request) (*http.Response, error) {
+func (m *failingMockClient) Do(_ *http.Request) (*http.Response, error) {
 	m.currentFail++
 
 	if m.currentFail <= m.failCount {
@@ -308,15 +308,15 @@ func TestRetryDifferentStatusCodes(t *testing.T) {
 		{"404 Not Found", 404, false, 2, 1},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			mock := &failingMockClient{failCount: 10, statusCode: tc.statusCode}
+			mock := &failingMockClient{failCount: 10, statusCode: testCase.statusCode}
 
 			config := RetryConfig{
-				MaxRetries:        tc.maxRetries,
+				MaxRetries:        testCase.maxRetries,
 				InitialBackoff:    1 * time.Millisecond,
 				MaxBackoff:        10 * time.Millisecond,
 				BackoffMultiplier: 2.0,
@@ -331,11 +331,11 @@ func TestRetryDifferentStatusCodes(t *testing.T) {
 				t.Fatal("expected error")
 			}
 
-			if mock.currentFail != tc.expectedFail {
-				t.Errorf("expected %d attempts, got %d", tc.expectedFail, mock.currentFail)
+			if mock.currentFail != testCase.expectedFail {
+				t.Errorf("expected %d attempts, got %d", testCase.expectedFail, mock.currentFail)
 			}
 
-			if tc.shouldRetry && !strings.Contains(err.Error(), "max retries exceeded") {
+			if testCase.shouldRetry && !strings.Contains(err.Error(), "max retries exceeded") {
 				t.Errorf("expected 'max retries exceeded' for retryable status, got: %v", err)
 			}
 		})

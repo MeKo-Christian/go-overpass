@@ -12,6 +12,8 @@ import (
 )
 
 func TestUnmarshal(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		input string
 		want  Result

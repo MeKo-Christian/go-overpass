@@ -51,23 +51,23 @@ func TestParseMapCSSBasicSelector(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) != tt.wantLen {
-				t.Errorf("got %d rules, want %d", len(ss.Rules), tt.wantLen)
+			if len(stylesheet.Rules) != testCase.wantLen {
+				t.Errorf("got %d rules, want %d", len(stylesheet.Rules), testCase.wantLen)
 			}
 
-			if len(ss.Rules) > 0 && len(ss.Rules[0].Selectors) > 0 {
-				if ss.Rules[0].Selectors[0].Type != tt.wantType {
-					t.Errorf("got type %q, want %q", ss.Rules[0].Selectors[0].Type, tt.wantType)
+			if len(stylesheet.Rules) > 0 && len(stylesheet.Rules[0].Selectors) > 0 {
+				if stylesheet.Rules[0].Selectors[0].Type != testCase.wantType {
+					t.Errorf("got type %q, want %q", stylesheet.Rules[0].Selectors[0].Type, testCase.wantType)
 				}
 			}
 		})
@@ -142,36 +142,36 @@ func TestParseMapCSSConditions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
 
-			sel := ss.Rules[0].Selectors[0]
+			sel := stylesheet.Rules[0].Selectors[0]
 			if len(sel.Conditions) == 0 {
 				t.Fatal("expected at least one condition")
 			}
 
 			cond := sel.Conditions[0]
-			if cond.Key != tt.wantKey {
-				t.Errorf("got key %q, want %q", cond.Key, tt.wantKey)
+			if cond.Key != testCase.wantKey {
+				t.Errorf("got key %q, want %q", cond.Key, testCase.wantKey)
 			}
 
-			if cond.Operator != tt.wantOp {
-				t.Errorf("got operator %q, want %q", cond.Operator, tt.wantOp)
+			if cond.Operator != testCase.wantOp {
+				t.Errorf("got operator %q, want %q", cond.Operator, testCase.wantOp)
 			}
 
-			if cond.Value != tt.wantVal {
-				t.Errorf("got value %q, want %q", cond.Value, tt.wantVal)
+			if cond.Value != testCase.wantVal {
+				t.Errorf("got value %q, want %q", cond.Value, testCase.wantVal)
 			}
 		})
 	}
@@ -254,21 +254,21 @@ func TestParseMapCSSColors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
 
-			decl := ss.Rules[0].Declarations[0]
+			decl := stylesheet.Rules[0].Declarations[0]
 			if decl.Value.Type != ValueTypeColor {
 				t.Fatalf("expected color type, got %v", decl.Value.Type)
 			}
@@ -277,21 +277,21 @@ func TestParseMapCSSColors(t *testing.T) {
 				t.Fatal("expected non-nil color")
 			}
 
-			c := decl.Value.Color
-			if abs(c.R-tt.wantR) > tt.tolerance {
-				t.Errorf("R: got %.3f, want %.3f", c.R, tt.wantR)
+			color := decl.Value.Color
+			if abs(color.R-testCase.wantR) > testCase.tolerance {
+				t.Errorf("R: got %.3f, want %.3f", color.R, testCase.wantR)
 			}
 
-			if abs(c.G-tt.wantG) > tt.tolerance {
-				t.Errorf("G: got %.3f, want %.3f", c.G, tt.wantG)
+			if abs(color.G-testCase.wantG) > testCase.tolerance {
+				t.Errorf("G: got %.3f, want %.3f", color.G, testCase.wantG)
 			}
 
-			if abs(c.B-tt.wantB) > tt.tolerance {
-				t.Errorf("B: got %.3f, want %.3f", c.B, tt.wantB)
+			if abs(color.B-testCase.wantB) > testCase.tolerance {
+				t.Errorf("B: got %.3f, want %.3f", color.B, testCase.wantB)
 			}
 
-			if abs(c.A-tt.wantA) > tt.tolerance {
-				t.Errorf("A: got %.3f, want %.3f", c.A, tt.wantA)
+			if abs(color.A-testCase.wantA) > testCase.tolerance {
+				t.Errorf("A: got %.3f, want %.3f", color.A, testCase.wantA)
 			}
 		})
 	}
@@ -343,27 +343,27 @@ func TestParseMapCSSDeclarations(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
 
-			decl := ss.Rules[0].Declarations[0]
-			if decl.Property != tt.wantProp {
-				t.Errorf("got property %q, want %q", decl.Property, tt.wantProp)
+			decl := stylesheet.Rules[0].Declarations[0]
+			if decl.Property != testCase.wantProp {
+				t.Errorf("got property %q, want %q", decl.Property, testCase.wantProp)
 			}
 
-			if decl.Value.Type != tt.wantType {
-				t.Errorf("got type %v, want %v", decl.Value.Type, tt.wantType)
+			if decl.Value.Type != testCase.wantType {
+				t.Errorf("got type %v, want %v", decl.Value.Type, testCase.wantType)
 			}
 		})
 	}
@@ -374,17 +374,17 @@ func TestParseMapCSSMultipleSelectors(t *testing.T) {
 
 	input := "way[highway=primary], way[highway=secondary] { color: red; }"
 
-	ss, err := ParseMapCSS(input)
+	stylesheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) != 1 {
-		t.Fatalf("got %d rules, want 1", len(ss.Rules))
+	if len(stylesheet.Rules) != 1 {
+		t.Fatalf("got %d rules, want 1", len(stylesheet.Rules))
 	}
 
-	if len(ss.Rules[0].Selectors) != 2 {
-		t.Fatalf("got %d selectors, want 2", len(ss.Rules[0].Selectors))
+	if len(stylesheet.Rules[0].Selectors) != 2 {
+		t.Fatalf("got %d selectors, want 2", len(stylesheet.Rules[0].Selectors))
 	}
 }
 
@@ -438,18 +438,18 @@ func TestParseMapCSSComments(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) != 1 {
-				t.Fatalf("got %d rules, want 1", len(ss.Rules))
+			if len(stylesheet.Rules) != 1 {
+				t.Fatalf("got %d rules, want 1", len(stylesheet.Rules))
 			}
 		})
 	}
@@ -484,27 +484,27 @@ func TestParseMapCSSSetDirective(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Declarations) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Declarations) == 0 {
 				t.Fatal("expected at least one rule with one declaration")
 			}
 
-			decl := ss.Rules[0].Declarations[0]
-			if decl.Property != tt.wantProp {
-				t.Errorf("got property %q, want %q", decl.Property, tt.wantProp)
+			decl := stylesheet.Rules[0].Declarations[0]
+			if decl.Property != testCase.wantProp {
+				t.Errorf("got property %q, want %q", decl.Property, testCase.wantProp)
 			}
 
-			if decl.Value.Raw != tt.wantVal {
-				t.Errorf("got value %q, want %q", decl.Value.Raw, tt.wantVal)
+			if decl.Value.Raw != testCase.wantVal {
+				t.Errorf("got value %q, want %q", decl.Value.Raw, testCase.wantVal)
 			}
 		})
 	}
@@ -540,26 +540,26 @@ func TestParseMapCSSPseudoClasses(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
 
-			sel := ss.Rules[0].Selectors[0]
-			if len(sel.PseudoClasses) != len(tt.pseudo) {
-				t.Fatalf("got %d pseudo-classes, want %d", len(sel.PseudoClasses), len(tt.pseudo))
+			sel := stylesheet.Rules[0].Selectors[0]
+			if len(sel.PseudoClasses) != len(testCase.pseudo) {
+				t.Fatalf("got %d pseudo-classes, want %d", len(sel.PseudoClasses), len(testCase.pseudo))
 			}
 
-			for i, p := range tt.pseudo {
+			for i, p := range testCase.pseudo {
 				if sel.PseudoClasses[i] != p {
 					t.Errorf("pseudo-class %d: got %q, want %q", i, sel.PseudoClasses[i], p)
 				}
@@ -573,16 +573,16 @@ func TestParseMapCSSClassSelectors(t *testing.T) {
 
 	input := "way.minor_road { color: gray; }"
 
-	ss, err := ParseMapCSS(input)
+	stylesheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+	if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
 
-	sel := ss.Rules[0].Selectors[0]
+	sel := stylesheet.Rules[0].Selectors[0]
 	if len(sel.Classes) != 1 || sel.Classes[0] != "minor_road" {
 		t.Errorf("got classes %v, want [minor_road]", sel.Classes)
 	}
@@ -593,16 +593,16 @@ func TestParseMapCSSLayer(t *testing.T) {
 
 	input := "way::casing { width: 10; }"
 
-	ss, err := ParseMapCSS(input)
+	stylesheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+	if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
 		t.Fatal("expected at least one rule with one selector")
 	}
 
-	sel := ss.Rules[0].Selectors[0]
+	sel := stylesheet.Rules[0].Selectors[0]
 	if sel.Layer != "casing" {
 		t.Errorf("got layer %q, want %q", sel.Layer, "casing")
 	}
@@ -637,12 +637,12 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			styleSheet, err := ParseMapCSS(tt.input)
+			styleSheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
@@ -652,12 +652,12 @@ func TestParseMapCSSZoomRange(t *testing.T) {
 			}
 
 			sel := styleSheet.Rules[0].Selectors[0]
-			if sel.ZoomMin != tt.wantMin {
-				t.Errorf("got ZoomMin %d, want %d", sel.ZoomMin, tt.wantMin)
+			if sel.ZoomMin != testCase.wantMin {
+				t.Errorf("got ZoomMin %d, want %d", sel.ZoomMin, testCase.wantMin)
 			}
 
-			if sel.ZoomMax != tt.wantMax {
-				t.Errorf("got ZoomMax %d, want %d", sel.ZoomMax, tt.wantMax)
+			if sel.ZoomMax != testCase.wantMax {
+				t.Errorf("got ZoomMax %d, want %d", sel.ZoomMax, testCase.wantMax)
 			}
 		})
 	}
@@ -714,32 +714,32 @@ func TestParseMapCSSQuotedStrings(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			ss, err := ParseMapCSS(tt.input)
+			stylesheet, err := ParseMapCSS(testCase.input)
 			if err != nil {
 				t.Fatalf("ParseMapCSS() error = %v", err)
 			}
 
-			if len(ss.Rules) == 0 || len(ss.Rules[0].Selectors) == 0 {
+			if len(stylesheet.Rules) == 0 || len(stylesheet.Rules[0].Selectors) == 0 {
 				t.Fatal("expected at least one rule with one selector")
 			}
 
-			sel := ss.Rules[0].Selectors[0]
+			sel := stylesheet.Rules[0].Selectors[0]
 			if len(sel.Conditions) == 0 {
 				t.Fatal("expected at least one condition")
 			}
 
 			cond := sel.Conditions[0]
-			if cond.Key != tt.wantKey {
-				t.Errorf("got key %q, want %q", cond.Key, tt.wantKey)
+			if cond.Key != testCase.wantKey {
+				t.Errorf("got key %q, want %q", cond.Key, testCase.wantKey)
 			}
 
-			if cond.Value != tt.wantVal {
-				t.Errorf("got value %q, want %q", cond.Value, tt.wantVal)
+			if cond.Value != testCase.wantVal {
+				t.Errorf("got value %q, want %q", cond.Value, testCase.wantVal)
 			}
 		})
 	}
@@ -784,13 +784,13 @@ func TestParseMapCSSComplexStylesheet(t *testing.T) {
 		}
 	`
 
-	ss, err := ParseMapCSS(input)
+	stylesheet, err := ParseMapCSS(input)
 	if err != nil {
 		t.Fatalf("ParseMapCSS() error = %v", err)
 	}
 
-	if len(ss.Rules) != 6 {
-		t.Errorf("got %d rules, want 6", len(ss.Rules))
+	if len(stylesheet.Rules) != 6 {
+		t.Errorf("got %d rules, want 6", len(stylesheet.Rules))
 	}
 }
 
@@ -839,14 +839,14 @@ func TestColorHex(t *testing.T) {
 		{Color{1, 0, 0, 0.5}, "#ff00007f"},
 	}
 
-	for _, tt := range tests {
-		tt := tt // capture range variable
-		t.Run(tt.wantHex, func(t *testing.T) {
+	for _, testCase := range tests {
+		testCase := testCase // capture range variable
+		t.Run(testCase.wantHex, func(t *testing.T) {
 			t.Parallel()
 
-			got := tt.color.Hex()
-			if got != tt.wantHex {
-				t.Errorf("got %q, want %q", got, tt.wantHex)
+			got := testCase.color.Hex()
+			if got != testCase.wantHex {
+				t.Errorf("got %q, want %q", got, testCase.wantHex)
 			}
 		})
 	}

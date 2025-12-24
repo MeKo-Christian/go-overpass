@@ -106,14 +106,14 @@ var ErrInvalidHexColor = errors.New("invalid hex color")
 
 // ParseMapCSS parses a MapCSS stylesheet string into a Stylesheet structure.
 func ParseMapCSS(input string) (*Stylesheet, error) {
-	p := &parser{
+	parser := &parser{
 		input: input,
 		pos:   0,
 		line:  1,
 		col:   1,
 	}
 
-	return p.parse()
+	return parser.parse()
 }
 
 type parser struct {
@@ -282,21 +282,21 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 		return nil, nil
 	}
 
-	ch := p.peek()
-	if ch == '{' || ch == ',' {
+	char := p.peek()
+	if char == '{' || char == ',' {
 		return nil, nil
 	}
 
 	sel := &Selector{}
 
 	// Parse type (node, way, relation, area, line, canvas, meta, *)
-	if ch == '*' {
+	if char == '*' {
 		sel.Type = "*"
 
 		p.advance()
-	} else if isLetter(ch) {
+	} else if isLetter(char) {
 		sel.Type = p.parseIdent()
-	} else if ch != '[' && ch != ':' && ch != '.' && ch != '|' {
+	} else if char != '[' && char != ':' && char != '.' && char != '|' {
 		return nil, nil
 	}
 
@@ -344,22 +344,22 @@ func (p *parser) parseSingleSelector() (*Selector, error) {
 
 	// Parse conditions [key=value], pseudo-classes :hover, and classes .name
 	for p.pos < len(p.input) {
-		ch := p.peek()
-		if ch == '[' {
+		char := p.peek()
+		if char == '[' {
 			cond, err := p.parseCondition()
 			if err != nil {
 				return nil, err
 			}
 
 			sel.Conditions = append(sel.Conditions, *cond)
-		} else if ch == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':') {
+		} else if char == ':' && (p.pos+1 >= len(p.input) || p.input[p.pos+1] != ':') {
 			p.advance()
 
 			pseudo := p.parseIdent()
 			if pseudo != "" {
 				sel.PseudoClasses = append(sel.PseudoClasses, pseudo)
 			}
-		} else if ch == '.' {
+		} else if char == '.' {
 			p.advance()
 
 			class := p.parseIdent()
@@ -874,19 +874,19 @@ func (p *parser) parseRegex() string {
 	buf.WriteByte('/')
 
 	for p.pos < len(p.input) {
-		ch := p.peek()
-		if ch == '\\' && p.pos+1 < len(p.input) {
-			buf.WriteByte(ch)
+		char := p.peek()
+		if char == '\\' && p.pos+1 < len(p.input) {
+			buf.WriteByte(char)
 			p.advance()
 			buf.WriteByte(p.peek())
 			p.advance()
-		} else if ch == '/' {
-			buf.WriteByte(ch)
+		} else if char == '/' {
+			buf.WriteByte(char)
 			p.advance()
 
 			break
 		} else {
-			buf.WriteByte(ch)
+			buf.WriteByte(char)
 			p.advance()
 		}
 	}
@@ -928,13 +928,13 @@ func (p *parser) skipWhitespace() {
 
 func (p *parser) skipWhitespaceAndComments() {
 	for p.pos < len(p.input) {
-		ch := p.peek()
-		if isWhitespace(ch) {
+		char := p.peek()
+		if isWhitespace(char) {
 			p.advance()
 			continue
 		}
 		// C-style comment
-		if ch == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '*' {
+		if char == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '*' {
 			p.pos += 2
 			for p.pos+1 < len(p.input) {
 				if p.input[p.pos] == '*' && p.input[p.pos+1] == '/' {
@@ -948,7 +948,7 @@ func (p *parser) skipWhitespaceAndComments() {
 			continue
 		}
 		// Line comment
-		if ch == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '/' {
+		if char == '/' && p.pos+1 < len(p.input) && p.input[p.pos+1] == '/' {
 			for p.pos < len(p.input) && p.peek() != '\n' {
 				p.advance()
 			}
@@ -1042,43 +1042,43 @@ func isTypeStart(ch byte) bool {
 
 func parseHexColorValue(hex string) (*Color, error) {
 	hex = strings.TrimPrefix(hex, "#")
-	var r, g, b, a float64
-	a = 1 // default alpha
+	var red, green, blue, alpha float64
+	alpha = 1 // default alpha
 
 	switch len(hex) {
 	case 3: // #RGB
-		r = float64(hexVal(hex[0])*17) / 255
-		g = float64(hexVal(hex[1])*17) / 255
-		b = float64(hexVal(hex[2])*17) / 255
+		red = float64(hexVal(hex[0])*17) / 255
+		green = float64(hexVal(hex[1])*17) / 255
+		blue = float64(hexVal(hex[2])*17) / 255
 	case 4: // #RGBA
-		r = float64(hexVal(hex[0])*17) / 255
-		g = float64(hexVal(hex[1])*17) / 255
-		b = float64(hexVal(hex[2])*17) / 255
-		a = float64(hexVal(hex[3])*17) / 255
+		red = float64(hexVal(hex[0])*17) / 255
+		green = float64(hexVal(hex[1])*17) / 255
+		blue = float64(hexVal(hex[2])*17) / 255
+		alpha = float64(hexVal(hex[3])*17) / 255
 	case 6: // #RRGGBB
-		r = float64(hexVal(hex[0])*16+hexVal(hex[1])) / 255
-		g = float64(hexVal(hex[2])*16+hexVal(hex[3])) / 255
-		b = float64(hexVal(hex[4])*16+hexVal(hex[5])) / 255
+		red = float64(hexVal(hex[0])*16+hexVal(hex[1])) / 255
+		green = float64(hexVal(hex[2])*16+hexVal(hex[3])) / 255
+		blue = float64(hexVal(hex[4])*16+hexVal(hex[5])) / 255
 	case 8: // #RRGGBBAA
-		r = float64(hexVal(hex[0])*16+hexVal(hex[1])) / 255
-		g = float64(hexVal(hex[2])*16+hexVal(hex[3])) / 255
-		b = float64(hexVal(hex[4])*16+hexVal(hex[5])) / 255
-		a = float64(hexVal(hex[6])*16+hexVal(hex[7])) / 255
+		red = float64(hexVal(hex[0])*16+hexVal(hex[1])) / 255
+		green = float64(hexVal(hex[2])*16+hexVal(hex[3])) / 255
+		blue = float64(hexVal(hex[4])*16+hexVal(hex[5])) / 255
+		alpha = float64(hexVal(hex[6])*16+hexVal(hex[7])) / 255
 	default:
 		return nil, fmt.Errorf("%w: #%s", ErrInvalidHexColor, hex)
 	}
 
-	return &Color{R: r, G: g, B: b, A: a}, nil
+	return &Color{R: red, G: green, B: blue, A: alpha}, nil
 }
 
-func hexVal(ch byte) int {
+func hexVal(char byte) int {
 	switch {
-	case ch >= '0' && ch <= '9':
-		return int(ch - '0')
-	case ch >= 'a' && ch <= 'f':
-		return int(ch-'a') + 10
-	case ch >= 'A' && ch <= 'F':
-		return int(ch-'A') + 10
+	case char >= '0' && char <= '9':
+		return int(char - '0')
+	case char >= 'a' && char <= 'f':
+		return int(char-'a') + 10
+	case char >= 'A' && char <= 'F':
+		return int(char-'A') + 10
 	}
 
 	return 0

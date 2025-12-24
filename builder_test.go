@@ -96,14 +96,14 @@ func TestBuilderTagFilters(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			query := tc.builder.Build()
-			if !strings.Contains(query, tc.expected) {
-				t.Errorf("expected %s in query:\n%s", tc.expected, query)
+			query := testCase.builder.Build()
+			if !strings.Contains(query, testCase.expected) {
+				t.Errorf("expected %s in query:\n%s", testCase.expected, query)
 			}
 		})
 	}
@@ -167,14 +167,14 @@ func TestBuilderOutputModes(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			query := tc.builder.Build()
-			if !strings.Contains(query, tc.expected) {
-				t.Errorf("expected %s in query:\n%s", tc.expected, query)
+			query := testCase.builder.Build()
+			if !strings.Contains(query, testCase.expected) {
+				t.Errorf("expected %s in query:\n%s", testCase.expected, query)
 			}
 		})
 	}

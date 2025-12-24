@@ -179,16 +179,16 @@ func TestGetSubcategory(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
 			got := meta.GetSubcategory()
-			if got != tc.expected {
-				t.Errorf("expected %s, got %s", tc.expected, got)
+			if got != testCase.expected {
+				t.Errorf("expected %s, got %s", testCase.expected, got)
 			}
 		})
 	}
@@ -265,16 +265,16 @@ func TestCategoryHelpers(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
-			got := tc.method(&meta)
-			if got != tc.expect {
-				t.Errorf("expected %v, got %v", tc.expect, got)
+			got := testCase.method(&meta)
+			if got != testCase.expect {
+				t.Errorf("expected %v, got %v", testCase.expect, got)
 			}
 		})
 	}
@@ -305,16 +305,16 @@ func TestGetName(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
 			got := meta.GetName()
-			if got != tc.expected {
-				t.Errorf("expected %s, got %s", tc.expected, got)
+			if got != testCase.expected {
+				t.Errorf("expected %s, got %s", testCase.expected, got)
 			}
 		})
 	}
@@ -427,16 +427,16 @@ func TestIsRoad(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
 			got := meta.IsRoad()
-			if got != tc.expected {
-				t.Errorf("expected %v, got %v", tc.expected, got)
+			if got != testCase.expected {
+				t.Errorf("expected %v, got %v", testCase.expected, got)
 			}
 		})
 	}
@@ -481,16 +481,16 @@ func TestIsFoodRelated(t *testing.T) {
 		{"hospital", map[string]string{"amenity": "hospital"}, false},
 	}
 
-	for _, tc := range testCases {
-		tc := tc // capture range variable
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		testCase := testCase // capture range variable
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			meta := Meta{Tags: tc.tags}
+			meta := Meta{Tags: testCase.tags}
 
 			got := meta.IsFoodRelated()
-			if got != tc.expected {
-				t.Errorf("expected %v, got %v", tc.expected, got)
+			if got != testCase.expected {
+				t.Errorf("expected %v, got %v", testCase.expected, got)
 			}
 		})
 	}

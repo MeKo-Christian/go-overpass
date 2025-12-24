@@ -50,20 +50,20 @@ func TestCacheSetAndGet(t *testing.T) {
 		TTL:        time.Minute,
 		MaxEntries: 100,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	result := Result{Count: 42, Timestamp: time.Now()}
 
 	// Cache miss initially
-	_, hit := c.get("endpoint", "query1")
+	_, hit := cache.get("endpoint", "query1")
 	if hit {
 		t.Error("unexpected cache hit")
 	}
 
 	// Set and retrieve
-	c.set("endpoint", "query1", result)
+	cache.set("endpoint", "query1", result)
 
-	retrieved, hit := c.get("endpoint", "query1")
+	retrieved, hit := cache.get("endpoint", "query1")
 	if !hit {
 		t.Fatal("expected cache hit")
 	}
@@ -81,13 +81,13 @@ func TestCacheExpiration(t *testing.T) {
 		TTL:        100 * time.Millisecond,
 		MaxEntries: 100,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	result := Result{Count: 42}
-	c.set("endpoint", "query1", result)
+	cache.set("endpoint", "query1", result)
 
 	// Should be cached immediately
-	_, hit := c.get("endpoint", "query1")
+	_, hit := cache.get("endpoint", "query1")
 	if !hit {
 		t.Fatal("expected cache hit")
 	}
@@ -96,7 +96,7 @@ func TestCacheExpiration(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 
 	// Should be expired
-	_, hit = c.get("endpoint", "query1")
+	_, hit = cache.get("endpoint", "query1")
 	if hit {
 		t.Error("expected cache miss after expiration")
 	}
@@ -176,22 +176,22 @@ func TestCacheClear(t *testing.T) {
 	t.Parallel()
 
 	config := CacheConfig{Enabled: true, TTL: time.Hour, MaxEntries: 100}
-	c := newCache(config)
+	cache := newCache(config)
 
-	c.set("e", "q1", Result{Count: 1})
-	c.set("e", "q2", Result{Count: 2})
+	cache.set("e", "q1", Result{Count: 1})
+	cache.set("e", "q2", Result{Count: 2})
 
-	if size := c.size(); size != 2 {
+	if size := cache.size(); size != 2 {
 		t.Errorf("expected size=2, got %d", size)
 	}
 
-	c.clear()
+	cache.clear()
 
-	if size := c.size(); size != 0 {
+	if size := cache.size(); size != 0 {
 		t.Errorf("expected size=0 after clear, got %d", size)
 	}
 
-	_, hit := c.get("e", "q1")
+	_, hit := cache.get("e", "q1")
 	if hit {
 		t.Error("cache should be empty after clear")
 	}
@@ -233,20 +233,20 @@ func TestCacheCleanupRoutine(t *testing.T) {
 		TTL:        50 * time.Millisecond,
 		MaxEntries: 100,
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c.startCleanupRoutine(ctx)
+	cache.startCleanupRoutine(ctx)
 
-	c.set("e", "q1", Result{Count: 1})
-	c.set("e", "q2", Result{Count: 2})
+	cache.set("e", "q1", Result{Count: 1})
+	cache.set("e", "q2", Result{Count: 2})
 
 	// Wait for automatic cleanup
 	time.Sleep(150 * time.Millisecond)
 
-	if size := c.size(); size != 0 {
+	if size := cache.size(); size != 0 {
 		t.Errorf("expected automatic cleanup, got size=%d", size)
 	}
 }
@@ -350,15 +350,15 @@ func TestCacheWithZeroMaxEntries(t *testing.T) {
 		TTL:        time.Minute,
 		MaxEntries: 0, // Unlimited
 	}
-	c := newCache(config)
+	cache := newCache(config)
 
 	// Add many entries
 	for i := 0; i < 100; i++ {
-		c.set("e", string(rune(i)), Result{Count: i})
+		cache.set("e", string(rune(i)), Result{Count: i})
 	}
 
 	// All should be stored (no eviction)
-	if size := c.size(); size != 100 {
+	if size := cache.size(); size != 100 {
 		t.Errorf("expected size=100, got %d", size)
 	}
 }
